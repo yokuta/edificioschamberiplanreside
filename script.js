@@ -260,8 +260,8 @@ function updateInstructionText() {
   const emptySub = document.getElementById('empty-sub');
 
   if (state.planResideActive) {
-    mapText.textContent = 'En modo Plan Reside, solo los edificios afectados en rojo se pueden seleccionar';
-    emptySub.textContent = 'En modo Plan Reside, haz clic únicamente sobre edificios afectados para ver su información';
+    mapText.textContent = 'Haz clic en un edificio para ver sus detalles';
+    emptySub.textContent = 'Haz clic en un edificio para ver sus detalles';
   } else {
     mapText.textContent = 'Haz clic en un edificio para ver sus detalles';
     emptySub.textContent = 'Haz clic sobre cualquier edificio en el mapa para ver su información';
