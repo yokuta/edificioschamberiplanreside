@@ -117,7 +117,7 @@ const state = {
   totalDwellings: 0,
 };
 
-let selectedLayer = null;
+
 
 /* ═══════════════════════════════════════════════
    MAP INITIALISATION
@@ -254,35 +254,37 @@ function updatePanel(feature) {
 }
 
 function clearPanel() {
-  document.getElementById('panel-empty').style.display  = 'flex';
+  if (state.selectedLayer && chamberiLayer) {
+    chamberiLayer.resetStyle(state.selectedLayer);
+  }
+
+  document.getElementById('panel-empty').style.display = 'flex';
   document.getElementById('building-detail').style.display = 'none';
+
   state.selectedFeature = null;
-  state.selectedLayer   = null;
+  state.selectedLayer = null;
 }
 
 /* ═══════════════════════════════════════════════
    KPI — compute & render
    ═══════════════════════════════════════════════ */
 function computeKPIs(geojsonData) {
-  let total = 0, affected = 0, dwellings = 0;
+  let total = 0, affected = 0;
 
   geojsonData.features.forEach(f => {
     const p = f.properties || {};
     total++;
     if (CONFIG.planResideFilter(p)) affected++;
-    if (p.numberOfDwellings) dwellings += Number(p.numberOfDwellings);
   });
 
-  state.totalBuildings   = total;
+  state.totalBuildings = total;
   state.affectedBuildings = affected;
-  state.totalDwellings   = dwellings;
 
   const pct = total > 0 ? ((affected / total) * 100).toFixed(1) : '0';
 
-  document.getElementById('kpi-total').textContent     = total.toLocaleString('es-ES');
-  document.getElementById('kpi-affected').textContent  = affected.toLocaleString('es-ES');
-  document.getElementById('kpi-pct').textContent       = `${pct}%`;
-  document.getElementById('kpi-dwellings').textContent = dwellings.toLocaleString('es-ES');
+  document.getElementById('kpi-total').textContent = total.toLocaleString('es-ES');
+  document.getElementById('kpi-affected').textContent = affected.toLocaleString('es-ES');
+  document.getElementById('kpi-pct').textContent = `${pct}%`;
 }
 
 /* ═══════════════════════════════════════════════
@@ -293,8 +295,7 @@ function onEachFeature(feature, layer) {
     mouseover: (e) => {
       const target = e.target;
 
-      // Solo iluminar si no está seleccionado
-      if (selectedLayer !== target) {
+      if (state.selectedLayer !== target) {
         target.setStyle(CONFIG.styles.hover);
       }
 
@@ -304,25 +305,25 @@ function onEachFeature(feature, layer) {
     mouseout: (e) => {
       const target = e.target;
 
-      // Si no está seleccionado, vuelve a su estilo normal
-      if (selectedLayer !== target) {
-        buildingsLayer.resetStyle(target);
+      if (state.selectedLayer !== target) {
+        chamberiLayer.resetStyle(target);
       }
     },
 
     click: (e) => {
       const target = e.target;
 
-      // Resetear selección anterior
-      if (selectedLayer && selectedLayer !== target) {
-        buildingsLayer.resetStyle(selectedLayer);
+      if (state.selectedLayer && state.selectedLayer !== target) {
+        chamberiLayer.resetStyle(state.selectedLayer);
       }
 
-      selectedLayer = target;
+      state.selectedLayer = target;
+      state.selectedFeature = feature;
+
       target.setStyle(CONFIG.styles.selected);
       target.bringToFront();
 
-      updateSidePanel(feature);
+      updatePanel(feature);
     }
   });
 }
@@ -413,10 +414,8 @@ async function init() {
 
 // Click on map background clears selection
 map.on('click', () => {
-  if (state.selectedLayer) {
-    state.selectedLayer.setStyle(getFeatureStyle(state.selectedFeature));
-  }
   clearPanel();
 });
+
 
 init();
