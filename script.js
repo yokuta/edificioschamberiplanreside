@@ -277,13 +277,14 @@ function updatePanel(feature) {
   const reference = getReference(props);
   const infoUrl = props.informationSystem || props.url || null;
 
-  // Desktop panel
+  // === DESKTOP (full panel - unchanged) ===
   document.getElementById('panel-empty').style.display = 'none';
   document.getElementById('building-detail').style.display = 'flex';
 
-  // Fill content (same as before)
   document.getElementById('detail-ref').textContent = reference;
-  document.getElementById('detail-subtitle').textContent = state.planResideActive && isAffected(props) ? 'Ficha del edificio · Plan Reside' : 'Ficha del edificio';
+  document.getElementById('detail-subtitle').textContent = state.planResideActive && isAffected(props)
+    ? 'Ficha del edificio · Plan Reside'
+    : 'Ficha del edificio';
   document.getElementById('detail-meta').textContent = getHeaderMeta(props);
 
   document.getElementById('prop-reference').textContent = reference;
@@ -299,7 +300,7 @@ function updatePanel(feature) {
   linkEl.style.display = infoUrl ? 'inline-flex' : 'none';
   if (infoUrl) linkEl.href = infoUrl;
 
-  // Image
+  // Image + props + badge stay only for desktop
   const img = document.getElementById('facade-img');
   const placeholder = document.getElementById('facade-placeholder');
   img.classList.remove('loaded');
@@ -309,12 +310,26 @@ function updatePanel(feature) {
     img.onerror = () => { placeholder.style.display = 'flex'; };
     img.src = props.documentLink;
   }
-
   document.getElementById('reside-badge').style.display = isAffected(props) ? 'flex' : 'none';
 
-  // MOBILE BOTTOM SHEET
+  // === MOBILE BOTTOM SHEET (SUPER COMPACT - only what you asked for) ===
   if (window.innerWidth <= 700) {
-    mobileDetailContent.innerHTML = document.getElementById('building-detail').innerHTML;
+    const mobileHTML = `
+      <div class="detail-header" style="border-bottom:none; padding:20px 20px 10px;">
+        <div class="detail-header-main">
+          <div class="detail-ref" style="font-size:15px;">${reference}</div>
+          <div class="detail-subtitle" style="margin-top:2px;">Ficha del edificio</div>
+          <div class="detail-meta" style="margin-top:4px; font-size:13px;">${getHeaderMeta(props)}</div>
+        </div>
+        ${infoUrl ? `
+          <a class="detail-link" href="${infoUrl}" target="_blank" rel="noopener"
+             style="margin-top:12px; align-self:flex-start;">
+            Ver en Catastro ↗
+          </a>
+        ` : ''}
+      </div>
+    `;
+    mobileDetailContent.innerHTML = mobileHTML;
     mobileBottomSheet.classList.add('open');
     mobileBottomSheet.style.display = 'block';
   }

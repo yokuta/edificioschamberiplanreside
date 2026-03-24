@@ -846,6 +846,24 @@ body.plan-reside-active .leaflet-interactive {
   .map-shell { flex: 1; }
 }
 
+/* ===================== MOBILE HEADER SIMPLIFICATION ===================== */
 @media (max-width: 700px) {
-  .map-instructions { top: 12px; right: 12px; left: 12px; max-width: none; }
+  .topbar-title,
+  .topbar-source {
+    display: none;
+  }
+  
+  .topbar-brand {
+    gap: 0;
+  }
+  
+  .topbar {
+    padding: 0 14px;
+  }
+  
+  .mobile-bottom-sheet {
+    max-height: 42%; /* much shorter now */
+  }
 }
+
+/* Rest of your existing styles remain exactly the same */
