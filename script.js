@@ -110,11 +110,9 @@ const CONFIG = {
 const state = {
   planResideActive: false,
   selectedFeature: null,
-  selectedLayer: null,
   chamberiBuildingsData: null,
   totalBuildings: 0,
   affectedBuildings: 0,
-  totalDwellings: 0,
 };
 
 
@@ -254,10 +252,6 @@ function updatePanel(feature) {
 }
 
 function clearPanel() {
-  if (state.selectedLayer && chamberiLayer) {
-    chamberiLayer.resetStyle(state.selectedLayer);
-  }
-
   document.getElementById('panel-empty').style.display = 'flex';
   document.getElementById('building-detail').style.display = 'none';
 
@@ -294,35 +288,17 @@ function onEachFeature(feature, layer) {
   layer.on({
     mouseover: (e) => {
       const target = e.target;
-
-      if (state.selectedLayer !== target) {
-        target.setStyle(CONFIG.styles.hover);
-      }
-
+      target.setStyle(CONFIG.styles.hover);
       target.bringToFront();
     },
 
     mouseout: (e) => {
       const target = e.target;
-
-      if (state.selectedLayer !== target) {
-        chamberiLayer.resetStyle(target);
-      }
+      target.setStyle(getFeatureStyle(feature));
     },
 
     click: (e) => {
-      const target = e.target;
-
-      if (state.selectedLayer && state.selectedLayer !== target) {
-        chamberiLayer.resetStyle(state.selectedLayer);
-      }
-
-      state.selectedLayer = target;
-      state.selectedFeature = feature;
-
-      target.setStyle(CONFIG.styles.selected);
-      target.bringToFront();
-
+      L.DomEvent.stopPropagation(e);
       updatePanel(feature);
     }
   });
@@ -333,10 +309,10 @@ function onEachFeature(feature, layer) {
    ═══════════════════════════════════════════════ */
 function applyResideStyles() {
   if (!chamberiLayer) return;
+
   chamberiLayer.eachLayer(layer => {
     const f = layer.feature;
     if (!f) return;
-    if (state.selectedLayer === layer) return; // keep selection style
     layer.setStyle(getFeatureStyle(f));
   });
 }
