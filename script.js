@@ -46,58 +46,58 @@ const CONFIG = {
 
   // Style helpers
   styles: {
-	  // Background Madrid layer
+	  // Base Madrid layer
 	  madrid: {
 		weight: 0.5,
-		color: '#cfd6dd',
-		fillColor: '#e7ebef',
-		fillOpacity: 0.55,
-	  },
-
-	  // Default Chamberí building
-	  chamberiDefault: {
-		weight: 0.9,
-		color: '#b9c3cc',
-		fillColor: '#dfe5ea',
-		fillOpacity: 0.82,
+		color: '#d5dbe3',
+		fillColor: '#edf1f5',
+		fillOpacity: 0.5,
 	  },
 
 	  // Residential buildings
 	  chamberiResidential: {
 		weight: 0.9,
-		color: '#aebac4',
-		fillColor: '#d6dde3',
-		fillOpacity: 0.9,
+		color: '#5f84b3',
+		fillColor: '#89abd3',
+		fillOpacity: 0.78,
 	  },
 
-	  // Hovered
+	  // Other uses
+	  chamberiDefault: {
+		weight: 0.9,
+		color: '#7f97ad',
+		fillColor: '#bcc9d6',
+		fillOpacity: 0.72,
+	  },
+
+	  // Hover
 	  hover: {
 		weight: 1.8,
-		color: '#c2185b',
-		fillColor: '#f8bbd0',
-		fillOpacity: 0.75,
+		color: '#1f4f82',
+		fillColor: '#6fa8dc',
+		fillOpacity: 0.9,
 	  },
 
 	  // Selected
 	  selected: {
-		weight: 2.2,
-		color: '#aa1144',
-		fillColor: '#f4a3bf',
-		fillOpacity: 0.9,
+		weight: 2,
+		color: '#c2185b',
+		fillColor: '#f3a6c1',
+		fillOpacity: 0.88,
 	  },
 
-	  // Plan Reside: at-risk buildings
+	  // Plan Reside affected
 	  reside: {
 		weight: 1.6,
 		color: '#b71c1c',
 		fillColor: '#e53935',
-		fillOpacity: 0.88,
+		fillOpacity: 0.9,
 	  },
 
-	  // Plan Reside: non-affected buildings (muted)
+	  // Plan Reside muted
 	  resideMuted: {
 		weight: 0.6,
-		color: '#d4dbe1',
+		color: '#d5dde5',
 		fillColor: '#edf1f4',
 		fillOpacity: 0.45,
 	  },
@@ -116,6 +116,8 @@ const state = {
   affectedBuildings: 0,
   totalDwellings: 0,
 };
+
+let selectedLayer = null;
 
 /* ═══════════════════════════════════════════════
    MAP INITIALISATION
@@ -287,33 +289,41 @@ function computeKPIs(geojsonData) {
    LAYER EVENT HANDLERS
    ═══════════════════════════════════════════════ */
 function onEachFeature(feature, layer) {
-  // Tooltip (reference on hover)
-
   layer.on({
-    mouseover(e) {
-      if (state.selectedLayer === layer) return;
-      layer.setStyle(CONFIG.styles.hover);
-      layer.bringToFront();
-    },
-    mouseout(e) {
-      if (state.selectedLayer === layer) return;
-      layer.setStyle(getFeatureStyle(feature));
-    },
-    click(e) {
-      L.DomEvent.stopPropagation(e);
+    mouseover: (e) => {
+      const target = e.target;
 
-      // Deselect previous
-      if (state.selectedLayer && state.selectedLayer !== layer) {
-        state.selectedLayer.setStyle(getFeatureStyle(state.selectedFeature));
+      // Solo iluminar si no está seleccionado
+      if (selectedLayer !== target) {
+        target.setStyle(CONFIG.styles.hover);
       }
 
-      state.selectedFeature = feature;
-      state.selectedLayer   = layer;
-      layer.setStyle(CONFIG.styles.selected);
-      layer.bringToFront();
-
-      updatePanel(feature);
+      target.bringToFront();
     },
+
+    mouseout: (e) => {
+      const target = e.target;
+
+      // Si no está seleccionado, vuelve a su estilo normal
+      if (selectedLayer !== target) {
+        buildingsLayer.resetStyle(target);
+      }
+    },
+
+    click: (e) => {
+      const target = e.target;
+
+      // Resetear selección anterior
+      if (selectedLayer && selectedLayer !== target) {
+        buildingsLayer.resetStyle(selectedLayer);
+      }
+
+      selectedLayer = target;
+      target.setStyle(CONFIG.styles.selected);
+      target.bringToFront();
+
+      updateSidePanel(feature);
+    }
   });
 }
 
