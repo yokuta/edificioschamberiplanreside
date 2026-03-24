@@ -36,7 +36,7 @@
 
   <main class="layout">
 
-    <!-- MOBILE COMPACT HEADER (solo móvil) -->
+    <!-- MOBILE COMPACT HEADER -->
     <div class="mobile-top">
       <section class="kpi-section mobile-kpis">
         <div class="kpi-card">
@@ -82,40 +82,9 @@
       </div>
     </section>
 
-    <!-- DESKTOP SIDE PANEL (restaurado exactamente como al principio) -->
+    <!-- DESKTOP SIDE PANEL -->
     <aside id="panel" class="panel">
-
-      <section class="kpi-section">
-        <div class="kpi-card">
-          <div class="kpi-value" id="kpi-total">—</div>
-          <div class="kpi-label">Edificios totales</div>
-        </div>
-        <div class="kpi-card kpi-card--accent" id="kpi-card-affected">
-          <div class="kpi-value" id="kpi-affected">—</div>
-          <div class="kpi-label">Afectados Plan Reside</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-value" id="kpi-pct">—</div>
-          <div class="kpi-label">% afectados</div>
-        </div>
-      </section>
-
-      <section class="legend-section">
-        <div class="legend-title">Leyenda</div>
-        <div class="legend-item" id="legend-residential">
-          <span class="legend-swatch legend-swatch--residential"></span>
-          <span>Residencial</span>
-        </div>
-        <div class="legend-item" id="legend-other">
-          <span class="legend-swatch legend-swatch--other"></span>
-          <span>Otro uso</span>
-        </div>
-        <div class="legend-item" id="legend-reside" style="display:none">
-          <span class="legend-swatch legend-swatch--reside"></span>
-          <span>Edificio afectado · Plan Reside</span>
-        </div>
-      </section>
-
+      <!-- (unchanged - full panel) -->
       <div class="panel-mode-hint" id="panel-mode-hint" style="display:none">
         <span class="mode-hint-icon">ℹ</span>
         En modo Plan Reside solo puedes seleccionar edificios afectados (en rojo)
@@ -125,7 +94,7 @@
         <div class="empty-icon">⬡</div>
         <p class="empty-title">Selecciona un edificio</p>
         <p class="empty-sub" id="empty-sub">
-          Haz clic sobre cualquier edificio en el mapa para ver su información
+          Haz clic sobre cualquier edificio en el mapa
         </p>
       </div>
 
@@ -164,7 +133,7 @@
       </section>
     </aside>
 
-    <!-- MOBILE BOTTOM SHEET (mínimo - como te gusta) -->
+    <!-- MOBILE BOTTOM SHEET (now minimal) -->
     <div id="mobile-bottom-sheet" class="mobile-bottom-sheet">
       <div class="bottom-sheet-handle"></div>
       <button id="close-bottom-sheet" class="close-sheet-btn" aria-label="Cerrar">✕</button>
