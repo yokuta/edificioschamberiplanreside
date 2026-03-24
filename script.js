@@ -341,6 +341,7 @@ function clearPanel() {
   document.getElementById('building-detail').style.display = 'none';
 }
 
+
 function computeKPIs(data) {
   let total = 0;
   let affected = 0;
@@ -355,9 +356,18 @@ function computeKPIs(data) {
 
   const pct = total > 0 ? ((affected / total) * 100).toFixed(1) : '0';
 
+  // Desktop
   document.getElementById('kpi-total').textContent = total.toLocaleString('es-ES');
   document.getElementById('kpi-affected').textContent = affected.toLocaleString('es-ES');
   document.getElementById('kpi-pct').textContent = `${pct}%`;
+
+  // Mobile
+  const totalM = document.getElementById('kpi-total-mobile');
+  const affectedM = document.getElementById('kpi-affected-mobile');
+  const pctM = document.getElementById('kpi-pct-mobile');
+  if (totalM) totalM.textContent = total.toLocaleString('es-ES');
+  if (affectedM) affectedM.textContent = affected.toLocaleString('es-ES');
+  if (pctM) pctM.textContent = `${pct}%`;
 }
 
 function clearSelection({ clearPanelToo = true } = {}) {
