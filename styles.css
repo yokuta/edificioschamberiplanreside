@@ -1,8 +1,3 @@
-/* ═══════════════════════════════════════════════════════
-   EDIFICIOS CHAMBERÍ · PLAN RESIDE
-   Urban Analytics Dashboard · Light Madrid Style
-   ═══════════════════════════════════════════════════════ */
-
 :root {
   --bg:              #f3f5f7;
   --surface:         rgba(255, 255, 255, 0.96);
@@ -15,13 +10,10 @@
   --text-muted:      #7b8794;
 
   --accent:          #c2185b;
-  --accent-dim:      rgba(194, 24, 91, 0.10);
   --danger:          #d32f2f;
-  --danger-dim:      rgba(211, 47, 47, 0.10);
 
   --bar-h:           54px;
   --panel-w:         360px;
-  --radius:          10px;
 
   --font-display:    'Syne', sans-serif;
   --font-body:       'DM Sans', sans-serif;
@@ -50,7 +42,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ─── TOPBAR ─── */
 .topbar {
   position: fixed;
   top: 0;
@@ -105,7 +96,6 @@ body {
   white-space: nowrap;
 }
 
-/* ─── TOGGLE BUTTON ─── */
 .btn-toggle {
   display: inline-flex;
   align-items: center;
@@ -182,7 +172,6 @@ body {
   color: var(--danger);
 }
 
-/* ─── MAIN LAYOUT ─── */
 .layout {
   position: fixed;
   top: var(--bar-h);
@@ -204,13 +193,13 @@ body {
   background: #e8edf1;
 }
 
-/* ─── MAP INSTRUCTIONS ─── */
 .map-instructions {
   position: absolute;
   top: 14px;
-  left: 14px;
+  right: 14px;
+  left: auto;
   z-index: 500;
-  max-width: 300px;
+  max-width: 320px;
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid var(--border-2);
   border-radius: 12px;
@@ -235,7 +224,6 @@ body {
   line-height: 1.45;
 }
 
-/* Leaflet control overrides */
 .leaflet-control-attribution {
   background: rgba(255, 255, 255, 0.90) !important;
   color: var(--text-muted) !important;
@@ -271,10 +259,9 @@ body {
 }
 
 .leaflet-bar a:last-child {
-  border-radius: 0 0 8px 8px !important;
+  border-radius: 0 0 8px !important;
 }
 
-/* ─── RIGHT PANEL ─── */
 .panel {
   width: var(--panel-w);
   flex-shrink: 0;
@@ -302,7 +289,6 @@ body {
   border-radius: 99px;
 }
 
-/* ─── KPI CARDS ─── */
 .kpi-section {
   display: flex;
   flex-direction: column;
@@ -364,7 +350,6 @@ body {
   font-weight: 600;
 }
 
-/* ─── LEGEND ─── */
 .legend-section {
   margin: 14px 14px 8px;
   padding: 12px 14px;
@@ -421,7 +406,6 @@ body {
   border-color: #1f4f82;
 }
 
-/* ─── MODE HINT ─── */
 .panel-mode-hint {
   margin: 0 14px 10px;
   padding: 10px 12px;
@@ -442,7 +426,6 @@ body {
   margin-top: 1px;
 }
 
-/* ─── EMPTY STATE ─── */
 .panel-empty-state {
   flex: 1;
   display: flex;
@@ -475,7 +458,6 @@ body {
   max-width: 260px;
 }
 
-/* ─── BUILDING DETAIL ─── */
 .building-detail {
   flex: 1;
   display: flex;
@@ -541,7 +523,6 @@ body {
   border-color: rgba(194, 24, 91, 0.28);
 }
 
-/* ─── FAÇADE IMAGE ─── */
 .facade-wrapper {
   position: relative;
   height: 175px;
@@ -572,7 +553,6 @@ body {
   letter-spacing: 0.04em;
 }
 
-/* ─── PROPS GRID ─── */
 .props-grid {
   padding: 10px 12px 12px;
   background: #f8fafc;
@@ -616,7 +596,6 @@ body {
   word-break: break-word;
 }
 
-/* ─── PLAN RESIDE BADGE ─── */
 .reside-badge {
   margin: 12px 14px 14px;
   padding: 11px 14px;
@@ -638,19 +617,8 @@ body {
   border-radius: 50%;
   background: var(--danger);
   flex-shrink: 0;
-  animation: pulse 1.8s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.35);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(211, 47, 47, 0);
-  }
-}
-
-/* ─── TOAST ─── */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -677,7 +645,6 @@ body {
   transform: translateX(-50%) translateY(0);
 }
 
-/* ─── LOADING OVERLAY ─── */
 .loading-overlay {
   position: fixed;
   inset: 0;
@@ -730,21 +697,6 @@ body {
   color: var(--text-muted);
 }
 
-/* ─── LEAFLET TOOLTIP ─── */
-.leaflet-tooltip.bld-tooltip {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid var(--border-2);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 11px;
-  padding: 4px 9px;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-/* Cursor helpers */
 .leaflet-interactive {
   cursor: pointer;
 }
@@ -753,7 +705,6 @@ body.plan-reside-active .leaflet-interactive {
   cursor: pointer;
 }
 
-/* ─── RESPONSIVE ─── */
 @media (max-width: 700px) {
   :root {
     --panel-w: 100vw;
@@ -785,8 +736,9 @@ body.plan-reside-active .leaflet-interactive {
   }
 
   .map-instructions {
-    left: 10px;
+    top: 10px;
     right: 10px;
+    left: 10px;
     max-width: none;
   }
 }

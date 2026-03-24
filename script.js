@@ -1,13 +1,5 @@
-/**
- * EDIFICIOS CHAMBERÍ · PLAN RESIDE
- * script.js — corrected full version
- */
-
 'use strict';
 
-/* ═══════════════════════════════════════════════
-   CONFIG
-   ═══════════════════════════════════════════════ */
 const CONFIG = {
   center: [40.4377, -3.7003],
   initialZoom: 15,
@@ -88,21 +80,15 @@ const CONFIG = {
   }
 };
 
-/* ═══════════════════════════════════════════════
-   STATE
-   ═══════════════════════════════════════════════ */
 const state = {
   planResideActive: false,
-  selectedLayer: null,   // persistent selection only in Plan Reside mode
+  selectedLayer: null,
   selectedFeature: null,
   hoveredLayer: null,
   totalBuildings: 0,
   affectedBuildings: 0
 };
 
-/* ═══════════════════════════════════════════════
-   MAP
-   ═══════════════════════════════════════════════ */
 const map = L.map('map', {
   center: CONFIG.center,
   zoom: CONFIG.initialZoom,
@@ -122,9 +108,6 @@ L.tileLayer(CONFIG.tileUrl, {
 let madridLayer = null;
 let chamberiLayer = null;
 
-/* ═══════════════════════════════════════════════
-   HELPERS
-   ═══════════════════════════════════════════════ */
 const USE_LABELS = {
   '1_residential': 'Residencial',
   '2_agriculture': 'Agrícola',
@@ -183,9 +166,7 @@ function getConstructionYear(props = {}) {
 
     const str = String(value).trim();
     const match = str.match(/\b(18|19|20)\d{2}\b/);
-    if (match) {
-      return match[0];
-    }
+    if (match) return match[0];
   }
 
   return '—';
@@ -200,9 +181,6 @@ function isAffected(featureOrProps) {
   return CONFIG.planResideFilter(props || {});
 }
 
-/* ═══════════════════════════════════════════════
-   STYLES
-   ═══════════════════════════════════════════════ */
 function getRestingStyle(feature) {
   const props = feature.properties || {};
 
@@ -243,9 +221,6 @@ function refreshAllStyles() {
   });
 }
 
-/* ═══════════════════════════════════════════════
-   TOAST
-   ═══════════════════════════════════════════════ */
 let toastTimer = null;
 
 function showToast(message) {
@@ -259,9 +234,6 @@ function showToast(message) {
   }, 2800);
 }
 
-/* ═══════════════════════════════════════════════
-   PANEL / UI TEXT
-   ═══════════════════════════════════════════════ */
 function updateInstructionText() {
   const mapText = document.getElementById('map-instructions-text');
   const emptySub = document.getElementById('empty-sub');
@@ -335,9 +307,6 @@ function clearPanel() {
   document.getElementById('building-detail').style.display = 'none';
 }
 
-/* ═══════════════════════════════════════════════
-   KPI
-   ═══════════════════════════════════════════════ */
 function computeKPIs(data) {
   let total = 0;
   let affected = 0;
@@ -357,9 +326,6 @@ function computeKPIs(data) {
   document.getElementById('kpi-pct').textContent = `${pct}%`;
 }
 
-/* ═══════════════════════════════════════════════
-   SELECTION / INTERACTION
-   ═══════════════════════════════════════════════ */
 function clearSelection({ clearPanelToo = true } = {}) {
   if (state.selectedLayer) {
     applyRestingStyle(state.selectedLayer);
@@ -390,27 +356,13 @@ function openInNormalMode(layer) {
   state.selectedFeature = layer.feature;
   updatePanel(layer.feature);
 
-  // Never keep persistent blue selection in normal mode.
-  // If the layer is hovered right now, keep hover; otherwise restore immediately.
   if (state.hoveredLayer !== layer) {
     applyRestingStyle(layer);
   }
 }
 
-/* ═══════════════════════════════════════════════
-   LAYER EVENTS
-   ═══════════════════════════════════════════════ */
 function onEachFeature(feature, layer) {
   const props = feature.properties || {};
-  const reference = getReference(props);
-
-  if (reference && reference !== '—') {
-    layer.bindTooltip(reference, {
-      className: 'bld-tooltip',
-      sticky: true,
-      offset: [10, 0]
-    });
-  }
 
   layer.on({
     mouseover() {
@@ -437,9 +389,6 @@ function onEachFeature(feature, layer) {
       if (state.hoveredLayer === layer) {
         state.hoveredLayer = null;
       }
-
-      // This is the critical fix:
-      // on every mouseout, always restore the true resting style.
       applyRestingStyle(layer);
     },
 
@@ -471,13 +420,11 @@ function onEachFeature(feature, layer) {
   });
 }
 
-/* ═══════════════════════════════════════════════
-   PLAN RESIDE TOGGLE
-   ═══════════════════════════════════════════════ */
 function updateModeUI() {
   document.body.classList.toggle('plan-reside-active', state.planResideActive);
   document.getElementById('btn-plan-reside').setAttribute('aria-pressed', String(state.planResideActive));
   document.getElementById('legend-reside').style.display = state.planResideActive ? 'flex' : 'none';
+  document.getElementById('legend-hover').style.display = state.planResideActive ? 'none' : 'flex';
   document.getElementById('panel-mode-hint').style.display = state.planResideActive ? 'flex' : 'none';
   updateInstructionText();
 }
@@ -491,9 +438,6 @@ document.getElementById('btn-plan-reside').addEventListener('click', function ()
   refreshAllStyles();
 });
 
-/* ═══════════════════════════════════════════════
-   DATA LOADING
-   ═══════════════════════════════════════════════ */
 async function loadJSON(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -547,9 +491,6 @@ async function init() {
   }
 }
 
-/* ═══════════════════════════════════════════════
-   MAP BACKGROUND CLICK
-   ═══════════════════════════════════════════════ */
 map.on('click', () => {
   state.hoveredLayer = null;
   clearSelection({ clearPanelToo: true });

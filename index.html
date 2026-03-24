@@ -6,11 +6,9 @@
   <title>Edificios Chamberí — Plan Reside</title>
   <link rel="icon" href="data:,">
 
-  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
@@ -19,7 +17,6 @@
 </head>
 <body>
 
-  <!-- ─── TOP BAR ─── -->
   <header class="topbar">
     <div class="topbar-brand">
       <span class="topbar-district">CHAMBERÍ</span>
@@ -37,10 +34,8 @@
     </div>
   </header>
 
-  <!-- ─── MAIN LAYOUT ─── -->
   <main class="layout">
 
-    <!-- MAP -->
     <section class="map-shell">
       <div id="map"></div>
 
@@ -52,10 +47,8 @@
       </div>
     </section>
 
-    <!-- RIGHT PANEL -->
     <aside id="panel" class="panel">
 
-      <!-- KPI CARDS -->
       <section class="kpi-section">
         <div class="kpi-card">
           <div class="kpi-value" id="kpi-total">—</div>
@@ -73,7 +66,6 @@
         </div>
       </section>
 
-      <!-- LEGEND -->
       <section class="legend-section">
         <div class="legend-title">Leyenda</div>
 
@@ -92,19 +84,17 @@
           <span>Edificio afectado · Plan Reside</span>
         </div>
 
-        <div class="legend-item">
+        <div class="legend-item" id="legend-hover">
           <span class="legend-swatch legend-swatch--hover"></span>
           <span>Hover</span>
         </div>
       </section>
 
-      <!-- MODE HINT -->
       <div class="panel-mode-hint" id="panel-mode-hint" style="display:none">
         <span class="mode-hint-icon">ℹ</span>
         En modo Plan Reside solo puedes seleccionar edificios afectados (en rojo)
       </div>
 
-      <!-- EMPTY STATE -->
       <div class="panel-empty-state" id="panel-empty">
         <div class="empty-icon">⬡</div>
         <p class="empty-title">Selecciona un edificio</p>
@@ -113,7 +103,6 @@
         </p>
       </div>
 
-      <!-- BUILDING DETAIL -->
       <section class="building-detail" id="building-detail" style="display:none">
 
         <div class="detail-header">
@@ -127,13 +116,11 @@
           </a>
         </div>
 
-        <!-- Façade image -->
         <div class="facade-wrapper">
           <img id="facade-img" class="facade-img" src="" alt="Fachada catastral" loading="lazy" />
           <div class="facade-placeholder" id="facade-placeholder">Sin imagen de fachada</div>
         </div>
 
-        <!-- Properties -->
         <div class="props-grid">
           <div class="prop-row">
             <span class="prop-key">Uso principal</span>
@@ -176,7 +163,6 @@
           </div>
         </div>
 
-        <!-- Plan Reside badge -->
         <div class="reside-badge" id="reside-badge" style="display:none">
           <span class="reside-badge-dot"></span>
           Afectado por Plan Reside
@@ -186,10 +172,8 @@
     </aside>
   </main>
 
-  <!-- TOAST -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- LOADING OVERLAY -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-inner">
       <div class="loading-spinner"></div>
