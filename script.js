@@ -74,12 +74,6 @@ const CONFIG = {
 		fillOpacity: 0.92,
 	  },
 
-	  selectedDefault: {
-		weight: 2,
-		color: '#1f4f82',
-		fillColor: '#6fa8dc',
-		fillOpacity: 0.92,
-	  },
 
 	  selectedReside: {
 		weight: 2,
@@ -148,15 +142,11 @@ let chamberiLayer  = null;
    ═══════════════════════════════════════════════ */
 function getFeatureStyle(feature, isSelected = false) {
   const p = feature.properties || {};
-
-  if (isSelected) {
-    return state.planResideActive
-      ? CONFIG.styles.selectedReside
-      : CONFIG.styles.selectedDefault;
-  }
+  const isAffected = CONFIG.planResideFilter(p);
 
   if (state.planResideActive) {
-    if (CONFIG.planResideFilter(p)) return CONFIG.styles.reside;
+    if (isSelected && isAffected) return CONFIG.styles.selectedReside;
+    if (isAffected) return CONFIG.styles.reside;
     return CONFIG.styles.resideMuted;
   }
 
@@ -298,8 +288,16 @@ function onEachFeature(feature, layer) {
   layer.on({
     mouseover: (e) => {
       const target = e.target;
+      const p = feature.properties || {};
+      const isAffected = CONFIG.planResideFilter(p);
 
-      if (state.selectedLayer !== target) {
+      // En modo Plan Reside, solo hover en edificios afectados
+      if (state.planResideActive && !isAffected) return;
+
+      // Hover solo temporal, nunca persistente en azul
+      if (state.planResideActive) {
+        target.setStyle(CONFIG.styles.selectedReside);
+      } else {
         target.setStyle(CONFIG.styles.hover);
       }
 
@@ -309,27 +307,42 @@ function onEachFeature(feature, layer) {
     mouseout: (e) => {
       const target = e.target;
 
-      if (state.selectedLayer === target) {
-        target.setStyle(getFeatureStyle(feature, true));
-      } else {
-        target.setStyle(getFeatureStyle(feature, false));
-      }
+      // Siempre volver al estilo base al salir
+      const isSelected = state.selectedLayer === target;
+      target.setStyle(getFeatureStyle(feature, isSelected));
     },
 
     click: (e) => {
       L.DomEvent.stopPropagation(e);
 
       const target = e.target;
+      const p = feature.properties || {};
+      const isAffected = CONFIG.planResideFilter(p);
 
+      // Si Plan Reside está activo, solo se pueden seleccionar los rojos
+      if (state.planResideActive && !isAffected) {
+        return;
+      }
+
+      // Resetear selección anterior
       if (state.selectedLayer && state.selectedLayer !== target) {
         state.selectedLayer.setStyle(
           getFeatureStyle(state.selectedLayer.feature, false)
         );
       }
 
+      // En modo normal: no mantener selección persistente
+      if (!state.planResideActive) {
+        state.selectedLayer = null;
+        state.selectedFeature = feature;
+        target.setStyle(getFeatureStyle(feature, false));
+        updatePanel(feature);
+        return;
+      }
+
+      // En modo Plan Reside: selección persistente solo en rojos
       state.selectedLayer = target;
       state.selectedFeature = feature;
-
       target.setStyle(getFeatureStyle(feature, true));
       target.bringToFront();
 
@@ -353,18 +366,22 @@ function applyResideStyles() {
   });
 }
 
-
 document.getElementById('btn-plan-reside').addEventListener('click', function () {
   state.planResideActive = !state.planResideActive;
   this.setAttribute('aria-pressed', String(state.planResideActive));
 
-  // Toggle body class for KPI highlight
   document.body.classList.toggle('plan-reside-active', state.planResideActive);
-
-  // Show/hide legend row
   document.getElementById('legend-reside').style.display =
     state.planResideActive ? 'flex' : 'none';
 
+  // Limpiar selección al cambiar de modo
+  if (state.selectedLayer) {
+    state.selectedLayer.setStyle(getFeatureStyle(state.selectedLayer.feature, false));
+  }
+  state.selectedLayer = null;
+  state.selectedFeature = null;
+
+  clearPanel();
   applyResideStyles();
 });
 
