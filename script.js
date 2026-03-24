@@ -1,6 +1,6 @@
 /**
  * EDIFICIOS CHAMBERÍ · PLAN RESIDE
- * script.js — Fixed version
+ * script.js — corrected full version
  */
 
 'use strict';
@@ -17,50 +17,75 @@ const CONFIG = {
     [40.415, -3.730],
     [40.460, -3.670]
   ],
+
   chamberiBuildingsPath: 'data/chamberi_buildings.geojson',
   madridBuildingsPath: null,
 
   planResideFilter: (props) =>
-    props.numberOfBuildingUnits === 1 &&
+    Number(props.numberOfBuildingUnits) === 1 &&
     props.currentUse === '1_residential',
 
   tileUrl: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  tileAttribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  tileAttribution:
+    '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
 
   styles: {
     madrid: {
-      weight: 0.5, color: '#d5dbe3',
-      fillColor: '#edf1f5', fillOpacity: 0.5,
+      weight: 0.5,
+      color: '#d5dbe3',
+      fillColor: '#edf1f5',
+      fillOpacity: 0.5
     },
+
     chamberiResidential: {
-      weight: 0.9, color: '#5f84b3',
-      fillColor: '#89abd3', fillOpacity: 0.78,
+      weight: 0.9,
+      color: '#5f84b3',
+      fillColor: '#89abd3',
+      fillOpacity: 0.78
     },
+
     chamberiDefault: {
-      weight: 0.9, color: '#7f97ad',
-      fillColor: '#bcc9d6', fillOpacity: 0.72,
+      weight: 0.9,
+      color: '#7f97ad',
+      fillColor: '#bcc9d6',
+      fillOpacity: 0.72
     },
+
     hover: {
-      weight: 2, color: '#1f4f82',
-      fillColor: '#4a90d9', fillOpacity: 0.92,
+      weight: 2,
+      color: '#1f4f82',
+      fillColor: '#4a90d9',
+      fillOpacity: 0.92
     },
-    hoverReside: {
-      weight: 2, color: '#8b0000',
-      fillColor: '#ff6659', fillOpacity: 0.95,
-    },
-    selectedReside: {
-      weight: 2.5, color: '#8b0000',
-      fillColor: '#e53935', fillOpacity: 0.95,
-    },
+
     reside: {
-      weight: 1.6, color: '#b71c1c',
-      fillColor: '#e53935', fillOpacity: 0.9,
+      weight: 1.6,
+      color: '#b71c1c',
+      fillColor: '#e53935',
+      fillOpacity: 0.9
     },
+
+    hoverReside: {
+      weight: 2.1,
+      color: '#8b0000',
+      fillColor: '#ff6659',
+      fillOpacity: 0.95
+    },
+
+    selectedReside: {
+      weight: 2.5,
+      color: '#8b0000',
+      fillColor: '#e53935',
+      fillOpacity: 0.98
+    },
+
     resideMuted: {
-      weight: 0.6, color: '#d5dde5',
-      fillColor: '#edf1f4', fillOpacity: 0.45,
-    },
-  },
+      weight: 0.6,
+      color: '#d5dde5',
+      fillColor: '#edf1f4',
+      fillOpacity: 0.45
+    }
+  }
 };
 
 /* ═══════════════════════════════════════════════
@@ -68,12 +93,11 @@ const CONFIG = {
    ═══════════════════════════════════════════════ */
 const state = {
   planResideActive: false,
-  // In normal mode: selectedLayer is null (no persistent visual selection)
-  // In reside mode: selectedLayer holds the currently selected red building
-  selectedLayer: null,
+  selectedLayer: null,   // persistent selection only in Plan Reside mode
   selectedFeature: null,
+  hoveredLayer: null,
   totalBuildings: 0,
-  affectedBuildings: 0,
+  affectedBuildings: 0
 };
 
 /* ═══════════════════════════════════════════════
@@ -86,31 +110,104 @@ const map = L.map('map', {
   maxZoom: CONFIG.maxZoom,
   maxBounds: CONFIG.maxBounds,
   maxBoundsViscosity: 0.85,
-  zoomControl: true,
+  zoomControl: true
 });
 
 L.tileLayer(CONFIG.tileUrl, {
   attribution: CONFIG.tileAttribution,
   subdomains: 'abcd',
-  maxZoom: 19,
+  maxZoom: 19
 }).addTo(map);
 
-let madridLayer   = null;
+let madridLayer = null;
 let chamberiLayer = null;
 
 /* ═══════════════════════════════════════════════
-   STYLE RESOLVER
-   Returns the "resting" style for a feature —
-   i.e. what it should look like when not hovered.
-   Never includes hover state.
+   HELPERS
+   ═══════════════════════════════════════════════ */
+const USE_LABELS = {
+  '1_residential': 'Residencial',
+  '2_agriculture': 'Agrícola',
+  '3_industrial': 'Industrial',
+  '4_commercial': 'Comercial',
+  '5_publicServices': 'Servicios públicos',
+  '6_recreational': 'Recreativo',
+  '7_otherUse': 'Otro uso'
+};
+
+function labelUse(raw) {
+  return raw ? (USE_LABELS[raw] || raw) : '—';
+}
+
+function labelCondition(raw) {
+  if (!raw) return '—';
+
+  const mapCondition = {
+    functional: 'Funcional',
+    ruin: 'En ruinas',
+    underConstruction: 'En construcción'
+  };
+
+  return mapCondition[raw] || raw;
+}
+
+function valueOrDash(value) {
+  return value === undefined || value === null || value === '' ? '—' : value;
+}
+
+function formatArea(val, uom) {
+  if (val === undefined || val === null || val === '') return '—';
+  const num = Number(val);
+  if (Number.isNaN(num)) return `${val} ${uom || 'm²'}`.trim();
+  return `${num.toLocaleString('es-ES')} ${uom || 'm²'}`;
+}
+
+function getConstructionYear(props = {}) {
+  const candidateKeys = [
+    'beginning',
+    'constructionYear',
+    'yearOfConstruction',
+    'builtYear',
+    'fechaConstruccion',
+    'anyoConstruccion',
+    'anioConstruccion'
+  ];
+
+  for (const key of candidateKeys) {
+    const value = props[key];
+    if (value === undefined || value === null || value === '') continue;
+
+    if (typeof value === 'number' && value > 0) {
+      return String(Math.trunc(value));
+    }
+
+    const str = String(value).trim();
+    const match = str.match(/\b(18|19|20)\d{2}\b/);
+    if (match) {
+      return match[0];
+    }
+  }
+
+  return '—';
+}
+
+function getReference(props = {}) {
+  return props.reference || props.localId || props.gml_id || '—';
+}
+
+function isAffected(featureOrProps) {
+  const props = featureOrProps && featureOrProps.properties ? featureOrProps.properties : featureOrProps;
+  return CONFIG.planResideFilter(props || {});
+}
+
+/* ═══════════════════════════════════════════════
+   STYLES
    ═══════════════════════════════════════════════ */
 function getRestingStyle(feature) {
-  const p = feature.properties || {};
+  const props = feature.properties || {};
 
   if (state.planResideActive) {
-    const isAffected = CONFIG.planResideFilter(p);
-    if (isAffected) {
-      // Selected affected building keeps a slightly brighter red
+    if (isAffected(props)) {
       if (state.selectedLayer && state.selectedLayer.feature === feature) {
         return CONFIG.styles.selectedReside;
       }
@@ -119,152 +216,217 @@ function getRestingStyle(feature) {
     return CONFIG.styles.resideMuted;
   }
 
-  // Normal mode — no persistent selection, just base colours
-  if (p.currentUse === '1_residential') return CONFIG.styles.chamberiResidential;
+  if (props.currentUse === '1_residential') {
+    return CONFIG.styles.chamberiResidential;
+  }
+
   return CONFIG.styles.chamberiDefault;
 }
 
-/* ═══════════════════════════════════════════════
-   LABEL HELPERS
-   ═══════════════════════════════════════════════ */
-const USE_LABELS = {
-  '1_residential':    'Residencial',
-  '2_agriculture':    'Agrícola',
-  '3_industrial':     'Industrial',
-  '4_commercial':     'Comercial',
-  '5_publicServices': 'Servicios Públicos',
-  '6_recreational':   'Recreativo',
-  '7_otherUse':       'Otro uso',
-};
+function applyRestingStyle(layer) {
+  if (!layer || !layer.feature) return;
+  layer.setStyle(getRestingStyle(layer.feature));
+}
 
-function labelUse(raw)       { return raw ? (USE_LABELS[raw] || raw) : '—'; }
-function labelCondition(raw) {
-  if (!raw) return '—';
-  return { functional: 'Funcional', ruin: 'En ruinas', underConstruction: 'En construcción' }[raw] || raw;
-}
-function labelYear(iso) {
-  if (!iso) return '—';
-  const y = iso.slice(0, 4);
-  return (y === '0001' || y === '1900' || y === '0000') ? '—' : y;
-}
-function formatArea(val, uom) {
-  if (val == null) return '—';
-  return `${Number(val).toLocaleString('es-ES')} ${uom || 'm²'}`;
+function refreshAllStyles() {
+  if (!chamberiLayer) return;
+
+  chamberiLayer.eachLayer((layer) => {
+    applyRestingStyle(layer);
+
+    const affected = isAffected(layer.feature);
+    if (state.planResideActive && !affected) {
+      if (layer._path) layer._path.style.cursor = 'not-allowed';
+    } else {
+      if (layer._path) layer._path.style.cursor = 'pointer';
+    }
+  });
 }
 
 /* ═══════════════════════════════════════════════
-   TOAST — transient feedback message
+   TOAST
    ═══════════════════════════════════════════════ */
 let toastTimer = null;
-function showToast(msg) {
+
+function showToast(message) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
+  el.textContent = message;
   el.classList.add('toast--visible');
+
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('toast--visible'), 2800);
+  toastTimer = setTimeout(() => {
+    el.classList.remove('toast--visible');
+  }, 2800);
 }
 
 /* ═══════════════════════════════════════════════
-   PANEL
+   PANEL / UI TEXT
    ═══════════════════════════════════════════════ */
-function updatePanel(feature) {
-  const p = feature.properties || {};
+function updateInstructionText() {
+  const mapText = document.getElementById('map-instructions-text');
+  const emptySub = document.getElementById('empty-sub');
 
-  document.getElementById('panel-empty').style.display    = 'none';
+  if (state.planResideActive) {
+    mapText.textContent = 'En modo Plan Reside, solo los edificios afectados en rojo se pueden seleccionar';
+    emptySub.textContent = 'En modo Plan Reside, haz clic únicamente sobre edificios afectados para ver su información';
+  } else {
+    mapText.textContent = 'Haz clic en un edificio para ver sus detalles';
+    emptySub.textContent = 'Haz clic sobre cualquier edificio en el mapa para ver su información';
+  }
+}
+
+function updatePanel(feature) {
+  const props = feature.properties || {};
+  const reference = getReference(props);
+  const infoUrl = props.informationSystem || props.url || null;
+
+  document.getElementById('panel-empty').style.display = 'none';
   document.getElementById('building-detail').style.display = 'flex';
 
-  // Reference & cadastral link
-  const ref = p.reference || p.localId || p.gml_id || '—';
-  document.getElementById('detail-ref').textContent = ref;
+  document.getElementById('detail-ref').textContent = reference;
+  document.getElementById('detail-subtitle').textContent = state.planResideActive && isAffected(props)
+    ? 'Edificio seleccionado · Plan Reside'
+    : 'Ficha del edificio';
 
-  const linkEl  = document.getElementById('detail-link');
-  const infoUrl = p.informationSystem;
+  document.getElementById('prop-reference').textContent = reference;
+  document.getElementById('prop-use').textContent = labelUse(props.currentUse);
+  document.getElementById('prop-year').textContent = getConstructionYear(props);
+  document.getElementById('prop-units').textContent = valueOrDash(props.numberOfBuildingUnits);
+  document.getElementById('prop-dwellings').textContent = valueOrDash(props.numberOfDwellings);
+  document.getElementById('prop-area').textContent = formatArea(props.value, props.value_uom);
+  document.getElementById('prop-floors').textContent = valueOrDash(props.numberOfFloorsAboveGround);
+  document.getElementById('prop-condition').textContent = labelCondition(props.conditionOfConstruction);
+
+  const linkEl = document.getElementById('detail-link');
   if (infoUrl) {
-    linkEl.href          = infoUrl;
+    linkEl.href = infoUrl;
     linkEl.style.display = 'inline-flex';
   } else {
+    linkEl.removeAttribute('href');
     linkEl.style.display = 'none';
   }
 
-  // Façade image
-  const img         = document.getElementById('facade-img');
+  const img = document.getElementById('facade-img');
   const placeholder = document.getElementById('facade-placeholder');
+
   img.classList.remove('loaded');
+  img.removeAttribute('src');
   placeholder.style.display = 'flex';
 
-  if (p.documentLink) {
-    img.src     = p.documentLink;
-    img.onload  = () => { img.classList.add('loaded'); placeholder.style.display = 'none'; };
-    img.onerror = () => { img.classList.remove('loaded'); placeholder.style.display = 'flex'; };
+  if (props.documentLink) {
+    img.onload = () => {
+      img.classList.add('loaded');
+      placeholder.style.display = 'none';
+    };
+
+    img.onerror = () => {
+      img.classList.remove('loaded');
+      placeholder.style.display = 'flex';
+    };
+
+    img.src = props.documentLink;
   }
 
-  // Properties
-  document.getElementById('prop-use').textContent       = labelUse(p.currentUse);
-  document.getElementById('prop-units').textContent     = p.numberOfBuildingUnits != null ? p.numberOfBuildingUnits : '—';
-  document.getElementById('prop-dwellings').textContent = p.numberOfDwellings      != null ? p.numberOfDwellings      : '—';
-  document.getElementById('prop-area').textContent      = formatArea(p.value, p.value_uom);
-  document.getElementById('prop-floors').textContent    = p.numberOfFloorsAboveGround != null ? p.numberOfFloorsAboveGround : '—';
-  document.getElementById('prop-year').textContent      = labelYear(p.beginning);
-  document.getElementById('prop-condition').textContent = labelCondition(p.conditionOfConstruction);
-
-  // Plan Reside badge
-  document.getElementById('reside-badge').style.display =
-    CONFIG.planResideFilter(p) ? 'flex' : 'none';
+  document.getElementById('reside-badge').style.display = isAffected(props) ? 'flex' : 'none';
 }
 
 function clearPanel() {
-  document.getElementById('panel-empty').style.display    = 'flex';
+  document.getElementById('panel-empty').style.display = 'flex';
   document.getElementById('building-detail').style.display = 'none';
 }
 
 /* ═══════════════════════════════════════════════
-   KPIs
+   KPI
    ═══════════════════════════════════════════════ */
 function computeKPIs(data) {
-  let total = 0, affected = 0;
-  data.features.forEach(f => {
-    total++;
-    if (CONFIG.planResideFilter(f.properties || {})) affected++;
+  let total = 0;
+  let affected = 0;
+
+  data.features.forEach((feature) => {
+    total += 1;
+    if (isAffected(feature)) affected += 1;
   });
-  state.totalBuildings    = total;
+
+  state.totalBuildings = total;
   state.affectedBuildings = affected;
+
   const pct = total > 0 ? ((affected / total) * 100).toFixed(1) : '0';
-  document.getElementById('kpi-total').textContent    = total.toLocaleString('es-ES');
+
+  document.getElementById('kpi-total').textContent = total.toLocaleString('es-ES');
   document.getElementById('kpi-affected').textContent = affected.toLocaleString('es-ES');
-  document.getElementById('kpi-pct').textContent      = `${pct}%`;
+  document.getElementById('kpi-pct').textContent = `${pct}%`;
+}
+
+/* ═══════════════════════════════════════════════
+   SELECTION / INTERACTION
+   ═══════════════════════════════════════════════ */
+function clearSelection({ clearPanelToo = true } = {}) {
+  if (state.selectedLayer) {
+    applyRestingStyle(state.selectedLayer);
+  }
+
+  state.selectedLayer = null;
+  state.selectedFeature = null;
+
+  if (clearPanelToo) {
+    clearPanel();
+  }
+}
+
+function selectAffectedLayerInResideMode(layer) {
+  if (state.selectedLayer && state.selectedLayer !== layer) {
+    applyRestingStyle(state.selectedLayer);
+  }
+
+  state.selectedLayer = layer;
+  state.selectedFeature = layer.feature;
+  layer.setStyle(CONFIG.styles.selectedReside);
+  layer.bringToFront();
+  updatePanel(layer.feature);
+}
+
+function openInNormalMode(layer) {
+  state.selectedLayer = null;
+  state.selectedFeature = layer.feature;
+  updatePanel(layer.feature);
+
+  // Never keep persistent blue selection in normal mode.
+  // If the layer is hovered right now, keep hover; otherwise restore immediately.
+  if (state.hoveredLayer !== layer) {
+    applyRestingStyle(layer);
+  }
 }
 
 /* ═══════════════════════════════════════════════
    LAYER EVENTS
-   Key insight: hover always resets on mouseout via
-   layer.setStyle(getRestingStyle(feature)) — no
-   conditional logic, always clean.
    ═══════════════════════════════════════════════ */
 function onEachFeature(feature, layer) {
-  const p = feature.properties || {};
+  const props = feature.properties || {};
+  const reference = getReference(props);
 
-  // Tooltip
-  const ref = p.reference || p.localId || '';
-  if (ref) {
-    layer.bindTooltip(ref, {
+  if (reference && reference !== '—') {
+    layer.bindTooltip(reference, {
       className: 'bld-tooltip',
       sticky: true,
-      offset: [10, 0],
+      offset: [10, 0]
     });
   }
 
   layer.on({
-
     mouseover() {
-      // Always apply hover style, regardless of mode or selection
-      const isAffected = CONFIG.planResideFilter(p);
+      state.hoveredLayer = layer;
+
       if (state.planResideActive) {
-        // In reside mode: only affected buildings get hover highlight
-        if (isAffected) {
-          layer.setStyle(CONFIG.styles.hoverReside);
+        if (isAffected(props)) {
+          layer.setStyle(
+            state.selectedLayer === layer
+              ? CONFIG.styles.selectedReside
+              : CONFIG.styles.hoverReside
+          );
           layer.bringToFront();
+        } else {
+          if (layer._path) layer._path.style.cursor = 'not-allowed';
         }
-        // Non-affected: cursor changes to 'not-allowed' via CSS, no style change
       } else {
         layer.setStyle(CONFIG.styles.hover);
         layer.bringToFront();
@@ -272,126 +434,126 @@ function onEachFeature(feature, layer) {
     },
 
     mouseout() {
-      // ALWAYS reset to resting style — this is the fix for "stuck hover"
-      layer.setStyle(getRestingStyle(feature));
+      if (state.hoveredLayer === layer) {
+        state.hoveredLayer = null;
+      }
+
+      // This is the critical fix:
+      // on every mouseout, always restore the true resting style.
+      applyRestingStyle(layer);
     },
 
     click(e) {
       L.DomEvent.stopPropagation(e);
-      const isAffected = CONFIG.planResideFilter(p);
 
       if (state.planResideActive) {
-        if (!isAffected) {
-          // Feedback for clicking non-affected building in Plan Reside mode
+        if (!isAffected(props)) {
           showToast('En modo Plan Reside solo puedes seleccionar edificios afectados (en rojo)');
           return;
         }
 
-        // Deselect previous reside selection
-        if (state.selectedLayer && state.selectedLayer !== layer) {
-          state.selectedLayer.setStyle(CONFIG.styles.reside);
-        }
-
-        state.selectedLayer   = layer;
-        state.selectedFeature = feature;
-        layer.setStyle(CONFIG.styles.selectedReside);
-        layer.bringToFront();
-        updatePanel(feature);
-
-      } else {
-        // Normal mode: open panel, NO persistent visual selection
-        // The building will return to its resting style on mouseout automatically
-        state.selectedLayer   = null;
-        state.selectedFeature = feature;
-        updatePanel(feature);
+        selectAffectedLayerInResideMode(layer);
+        return;
       }
-    },
+
+      openInNormalMode(layer);
+    }
+  });
+
+  layer.on('add', () => {
+    if (layer._path) {
+      if (state.planResideActive && !isAffected(props)) {
+        layer._path.style.cursor = 'not-allowed';
+      } else {
+        layer._path.style.cursor = 'pointer';
+      }
+    }
   });
 }
 
 /* ═══════════════════════════════════════════════
    PLAN RESIDE TOGGLE
    ═══════════════════════════════════════════════ */
-function applyResideStyles() {
-  if (!chamberiLayer) return;
-  chamberiLayer.eachLayer(layer => {
-    if (layer.feature) layer.setStyle(getRestingStyle(layer.feature));
-  });
+function updateModeUI() {
+  document.body.classList.toggle('plan-reside-active', state.planResideActive);
+  document.getElementById('btn-plan-reside').setAttribute('aria-pressed', String(state.planResideActive));
+  document.getElementById('legend-reside').style.display = state.planResideActive ? 'flex' : 'none';
+  document.getElementById('panel-mode-hint').style.display = state.planResideActive ? 'flex' : 'none';
+  updateInstructionText();
 }
 
 document.getElementById('btn-plan-reside').addEventListener('click', function () {
   state.planResideActive = !state.planResideActive;
-  this.setAttribute('aria-pressed', String(state.planResideActive));
 
-  document.body.classList.toggle('plan-reside-active', state.planResideActive);
-  document.getElementById('legend-reside').style.display =
-    state.planResideActive ? 'flex' : 'none';
-
-  // Mode hint text
-  document.getElementById('panel-mode-hint').style.display =
-    state.planResideActive ? 'flex' : 'none';
-
-  // Clear any selection when switching modes
-  state.selectedLayer   = null;
-  state.selectedFeature = null;
-  clearPanel();
-  applyResideStyles();
+  state.hoveredLayer = null;
+  clearSelection({ clearPanelToo: true });
+  updateModeUI();
+  refreshAllStyles();
 });
 
 /* ═══════════════════════════════════════════════
-   LOAD DATA
+   DATA LOADING
    ═══════════════════════════════════════════════ */
 async function loadJSON(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
-  return res.json();
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} — ${url}`);
+  }
+  return response.json();
 }
 
 function hideLoading() {
   const el = document.getElementById('loading-overlay');
   el.classList.add('hidden');
-  setTimeout(() => { el.style.display = 'none'; }, 450);
+  setTimeout(() => {
+    el.style.display = 'none';
+  }, 450);
 }
 
 async function init() {
   try {
     if (CONFIG.madridBuildingsPath) {
       try {
-        const d = await loadJSON(CONFIG.madridBuildingsPath);
-        madridLayer = L.geoJSON(d, { style: CONFIG.styles.madrid, interactive: false }).addTo(map);
-      } catch (e) {
-        console.warn('Madrid layer skipped:', e.message);
+        const madridData = await loadJSON(CONFIG.madridBuildingsPath);
+        madridLayer = L.geoJSON(madridData, {
+          style: CONFIG.styles.madrid,
+          interactive: false
+        }).addTo(map);
+      } catch (error) {
+        console.warn('Madrid layer skipped:', error.message);
       }
     }
 
     const chamberiData = await loadJSON(CONFIG.chamberiBuildingsPath);
 
     chamberiLayer = L.geoJSON(chamberiData, {
-      style: f => getRestingStyle(f),
-      onEachFeature,
+      style: (feature) => getRestingStyle(feature),
+      onEachFeature
     }).addTo(map);
 
     const bounds = chamberiLayer.getBounds();
-    if (bounds.isValid()) map.fitBounds(bounds, { padding: [20, 20] });
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [20, 20] });
+    }
 
     computeKPIs(chamberiData);
+    updateModeUI();
+    refreshAllStyles();
     hideLoading();
-
-  } catch (err) {
-    console.error('Error loading data:', err);
+  } catch (error) {
+    console.error('Error loading data:', error);
     document.querySelector('.loading-text').textContent =
       'Error al cargar los datos. Revisa la consola.';
   }
 }
 
-// Click on map background → clear panel, clear selection
+/* ═══════════════════════════════════════════════
+   MAP BACKGROUND CLICK
+   ═══════════════════════════════════════════════ */
 map.on('click', () => {
-  if (state.selectedLayer) {
-    state.selectedLayer.setStyle(getRestingStyle(state.selectedLayer.feature));
-    state.selectedLayer = null;
-  }
-  state.selectedFeature = null;
-  clearPanel();
+  state.hoveredLayer = null;
+  clearSelection({ clearPanelToo: true });
+  refreshAllStyles();
 });
 
 init();

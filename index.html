@@ -13,7 +13,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -25,8 +25,9 @@
       <span class="topbar-district">CHAMBERÍ</span>
       <span class="topbar-title">Edificios · Plan Reside</span>
     </div>
+
     <div class="topbar-controls">
-      <button id="btn-plan-reside" class="btn-toggle" aria-pressed="false" type="button">
+      <button id="btn-plan-reside" class="btn-toggle" aria-pressed="false" type="button" aria-label="Activar o desactivar Plan Reside">
         <span class="toggle-track" aria-hidden="true">
           <span class="toggle-thumb"></span>
         </span>
@@ -40,7 +41,16 @@
   <main class="layout">
 
     <!-- MAP -->
-    <div id="map"></div>
+    <section class="map-shell">
+      <div id="map"></div>
+
+      <div class="map-instructions" id="map-instructions">
+        <div class="map-instructions__title">Interacción</div>
+        <div class="map-instructions__text" id="map-instructions-text">
+          Haz clic en un edificio para ver sus detalles
+        </div>
+      </div>
+    </section>
 
     <!-- RIGHT PANEL -->
     <aside id="panel" class="panel">
@@ -51,10 +61,12 @@
           <div class="kpi-value" id="kpi-total">—</div>
           <div class="kpi-label">Edificios totales</div>
         </div>
+
         <div class="kpi-card kpi-card--accent" id="kpi-card-affected">
           <div class="kpi-value" id="kpi-affected">—</div>
           <div class="kpi-label">Afectados Plan Reside</div>
         </div>
+
         <div class="kpi-card">
           <div class="kpi-value" id="kpi-pct">—</div>
           <div class="kpi-label">% afectados</div>
@@ -64,42 +76,52 @@
       <!-- LEGEND -->
       <section class="legend-section">
         <div class="legend-title">Leyenda</div>
+
         <div class="legend-item">
           <span class="legend-swatch legend-swatch--residential"></span>
           <span>Residencial</span>
         </div>
+
         <div class="legend-item">
           <span class="legend-swatch legend-swatch--other"></span>
           <span>Otro uso</span>
         </div>
+
         <div class="legend-item" id="legend-reside" style="display:none">
           <span class="legend-swatch legend-swatch--reside"></span>
-          <span>En riesgo · Plan Reside</span>
+          <span>Edificio afectado · Plan Reside</span>
         </div>
+
         <div class="legend-item">
           <span class="legend-swatch legend-swatch--hover"></span>
-          <span>Hover / seleccionado</span>
+          <span>Hover</span>
         </div>
       </section>
 
-      <!-- MODE HINT (shown in Plan Reside mode) -->
+      <!-- MODE HINT -->
       <div class="panel-mode-hint" id="panel-mode-hint" style="display:none">
         <span class="mode-hint-icon">ℹ</span>
-        En este modo solo puedes seleccionar edificios afectados (en rojo)
+        En modo Plan Reside solo puedes seleccionar edificios afectados (en rojo)
       </div>
 
       <!-- EMPTY STATE -->
       <div class="panel-empty-state" id="panel-empty">
         <div class="empty-icon">⬡</div>
         <p class="empty-title">Selecciona un edificio</p>
-        <p class="empty-sub">Haz clic sobre cualquier edificio en el mapa para ver su ficha catastral</p>
+        <p class="empty-sub" id="empty-sub">
+          Haz clic sobre cualquier edificio en el mapa para ver su información
+        </p>
       </div>
 
       <!-- BUILDING DETAIL -->
       <section class="building-detail" id="building-detail" style="display:none">
 
         <div class="detail-header">
-          <div class="detail-ref" id="detail-ref">—</div>
+          <div class="detail-header-main">
+            <div class="detail-ref" id="detail-ref">—</div>
+            <div class="detail-subtitle" id="detail-subtitle">Ficha del edificio</div>
+          </div>
+
           <a class="detail-link" id="detail-link" href="#" target="_blank" rel="noopener">
             Ver en Catastro ↗
           </a>
@@ -117,26 +139,37 @@
             <span class="prop-key">Uso principal</span>
             <span class="prop-val" id="prop-use">—</span>
           </div>
+
           <div class="prop-row">
             <span class="prop-key">Año construcción</span>
             <span class="prop-val" id="prop-year">—</span>
           </div>
+
+          <div class="prop-row">
+            <span class="prop-key">Referencia</span>
+            <span class="prop-val" id="prop-reference">—</span>
+          </div>
+
           <div class="prop-row">
             <span class="prop-key">Unidades catastrales</span>
             <span class="prop-val" id="prop-units">—</span>
           </div>
+
           <div class="prop-row">
             <span class="prop-key">Viviendas</span>
             <span class="prop-val" id="prop-dwellings">—</span>
           </div>
+
           <div class="prop-row">
             <span class="prop-key">Sup. construida</span>
             <span class="prop-val" id="prop-area">—</span>
           </div>
+
           <div class="prop-row">
             <span class="prop-key">Plantas s/rasante</span>
             <span class="prop-val" id="prop-floors">—</span>
           </div>
+
           <div class="prop-row">
             <span class="prop-key">Estado</span>
             <span class="prop-val" id="prop-condition">—</span>
@@ -150,7 +183,6 @@
         </div>
 
       </section>
-
     </aside>
   </main>
 
