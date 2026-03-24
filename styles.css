@@ -486,6 +486,15 @@ body {
   background: #fff;
 }
 
+.detail-meta {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+
 .detail-header-main {
   min-width: 0;
 }

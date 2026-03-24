@@ -145,6 +145,27 @@ function formatArea(val, uom) {
   return `${num.toLocaleString('es-ES')} ${uom || 'm²'}`;
 }
 
+function formatAreaShort(val, uom) {
+  if (val === undefined || val === null || val === '') return null;
+  const num = Number(val);
+  if (Number.isNaN(num)) return `${val} ${uom || 'm²'}`.trim();
+  return `${num.toLocaleString('es-ES')} ${uom || 'm²'}`;
+}
+
+function getHeaderMeta(props = {}) {
+  const parts = [];
+
+  const year = getConstructionYear(props);
+  const area = formatAreaShort(props.value, props.value_uom);
+
+  if (year && year !== '—') parts.push(`Año ${year}`);
+  if (area) parts.push(area);
+
+  return parts.length ? parts.join(' · ') : 'Información catastral disponible';
+}
+
+
+
 function getConstructionYear(props = {}) {
   const candidateKeys = [
     'beginning',
@@ -257,8 +278,10 @@ function updatePanel(feature) {
 
   document.getElementById('detail-ref').textContent = reference;
   document.getElementById('detail-subtitle').textContent = state.planResideActive && isAffected(props)
-    ? 'Edificio seleccionado · Plan Reside'
+    ? 'Ficha del edificio · Plan Reside'
     : 'Ficha del edificio';
+
+  document.getElementById('detail-meta').textContent = getHeaderMeta(props);
 
   document.getElementById('prop-reference').textContent = reference;
   document.getElementById('prop-use').textContent = labelUse(props.currentUse);
@@ -491,8 +514,22 @@ async function init() {
   }
 }
 
+
+map.getContainer().addEventListener('mousemove', (e) => {
+  const target = e.target;
+
+  const isBuildingPath =
+    target &&
+    target.classList &&
+    target.classList.contains('leaflet-interactive');
+
+  if (!isBuildingPath) {
+    clearHoveredLayer();
+  }
+});
+
 map.on('click', () => {
-  state.hoveredLayer = null;
+  clearHoveredLayer();
   clearSelection({ clearPanelToo: true });
   refreshAllStyles();
 });
