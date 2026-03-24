@@ -362,6 +362,20 @@ function clearSelection({ clearPanelToo = true } = {}) {
   }
 }
 
+function zoomToBuilding(layer) {
+  if (!layer) return;
+
+  const bounds = layer.getBounds();
+  if (!bounds.isValid()) return;
+
+  const targetZoom = Math.min(17, map.getBoundsZoom(bounds));
+  map.flyToBounds(bounds, {
+    padding: [50, 50],
+    maxZoom: targetZoom,
+    duration: 0.5
+  });
+}
+
 function clearHoveredLayer() {
   if (!state.hoveredLayer) return;
 
@@ -423,20 +437,22 @@ function onEachFeature(feature, layer) {
     },
 
     click(e) {
-      L.DomEvent.stopPropagation(e);
+	  L.DomEvent.stopPropagation(e);
 
-      if (state.planResideActive) {
-        if (!isAffected(props)) {
-          showToast('En modo Plan Reside solo puedes seleccionar edificios afectados (en rojo)');
-          return;
-        }
+	  if (state.planResideActive) {
+		if (!isAffected(props)) {
+		  showToast('En modo Plan Reside solo puedes seleccionar edificios afectados (en rojo)');
+		  return;
+		}
 
-        selectAffectedLayerInResideMode(layer);
-        return;
-      }
+		zoomToBuilding(layer);
+		selectAffectedLayerInResideMode(layer);
+		return;
+	  }
 
-      openInNormalMode(layer);
-    }
+	  zoomToBuilding(layer);
+	  openInNormalMode(layer);
+	}
   });
 
   layer.on('add', () => {
