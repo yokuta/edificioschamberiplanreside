@@ -272,7 +272,6 @@ function updateInstructionText() {
     emptySub.textContent = 'Haz clic sobre cualquier edificio en el mapa para ver su información';
   }
 }
-
 function updatePanel(feature) {
   const props = feature.properties || {};
   const reference = getReference(props);
@@ -282,12 +281,9 @@ function updatePanel(feature) {
   document.getElementById('panel-empty').style.display = 'none';
   document.getElementById('building-detail').style.display = 'flex';
 
-  // Fill desktop content (unchanged logic)
+  // Fill content (same as before)
   document.getElementById('detail-ref').textContent = reference;
-  document.getElementById('detail-subtitle').textContent = state.planResideActive && isAffected(props)
-    ? 'Ficha del edificio · Plan Reside'
-    : 'Ficha del edificio';
-
+  document.getElementById('detail-subtitle').textContent = state.planResideActive && isAffected(props) ? 'Ficha del edificio · Plan Reside' : 'Ficha del edificio';
   document.getElementById('detail-meta').textContent = getHeaderMeta(props);
 
   document.getElementById('prop-reference').textContent = reference;
@@ -300,20 +296,14 @@ function updatePanel(feature) {
   document.getElementById('prop-condition').textContent = labelCondition(props.conditionOfConstruction);
 
   const linkEl = document.getElementById('detail-link');
-  if (infoUrl) {
-    linkEl.href = infoUrl;
-    linkEl.style.display = 'inline-flex';
-  } else {
-    linkEl.style.display = 'none';
-  }
+  linkEl.style.display = infoUrl ? 'inline-flex' : 'none';
+  if (infoUrl) linkEl.href = infoUrl;
 
-  // Image handling (same as before)
+  // Image
   const img = document.getElementById('facade-img');
   const placeholder = document.getElementById('facade-placeholder');
   img.classList.remove('loaded');
-  img.removeAttribute('src');
   placeholder.style.display = 'flex';
-
   if (props.documentLink) {
     img.onload = () => { img.classList.add('loaded'); placeholder.style.display = 'none'; };
     img.onerror = () => { placeholder.style.display = 'flex'; };
@@ -322,15 +312,13 @@ function updatePanel(feature) {
 
   document.getElementById('reside-badge').style.display = isAffected(props) ? 'flex' : 'none';
 
-  // === MOBILE BOTTOM SHEET ===
+  // MOBILE BOTTOM SHEET
   if (window.innerWidth <= 700) {
-    // Clone the detail content for mobile
     mobileDetailContent.innerHTML = document.getElementById('building-detail').innerHTML;
     mobileBottomSheet.classList.add('open');
     mobileBottomSheet.style.display = 'block';
   }
 }
-
 
 
 function clearPanel() {
@@ -573,16 +561,13 @@ async function init() {
 // Close mobile bottom sheet
 closeBottomSheetBtn.addEventListener('click', () => {
   mobileBottomSheet.classList.remove('open');
-  setTimeout(() => {
-    mobileBottomSheet.style.display = 'none';
-    clearSelection({ clearPanelToo: false }); // keep desktop cleared if needed
-  }, 350);
+  setTimeout(() => { mobileBottomSheet.style.display = 'none'; }, 350);
+  clearSelection({ clearPanelToo: false });
 });
 
-// Close bottom sheet when clicking map on mobile
 map.on('click', () => {
   clearHoveredLayer();
-  if (window.innerWidth <= 700) {
+  if (window.innerWidth <= 700 && mobileBottomSheet.classList.contains('open')) {
     mobileBottomSheet.classList.remove('open');
     setTimeout(() => { mobileBottomSheet.style.display = 'none'; }, 350);
   }
@@ -590,25 +575,14 @@ map.on('click', () => {
   refreshAllStyles();
 });
 
-
-
-map.getContainer().addEventListener('mousemove', (e) => {
-  const target = e.target;
-
-  const isBuildingPath =
-    target &&
-    target.classList &&
-    target.classList.contains('leaflet-interactive');
-
-  if (!isBuildingPath) {
-    clearHoveredLayer();
+// Update clearSelection to also close mobile sheet
+const originalClearSelection = clearSelection;
+clearSelection = function (options = {}) {
+  originalClearSelection(options);
+  if (window.innerWidth <= 700) {
+    mobileBottomSheet.classList.remove('open');
+    setTimeout(() => { mobileBottomSheet.style.display = 'none'; }, 300);
   }
-});
-
-map.on('click', () => {
-  clearHoveredLayer();
-  clearSelection({ clearPanelToo: true });
-  refreshAllStyles();
-});
+};
 
 init();

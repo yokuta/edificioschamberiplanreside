@@ -36,19 +36,17 @@
 
   <main class="layout">
 
-    <!-- Mobile top compact section -->
+    <!-- MOBILE COMPACT HEADER -->
     <div class="mobile-top">
-      <section class="kpi-section">
+      <section class="kpi-section mobile-kpis">
         <div class="kpi-card">
           <div class="kpi-value" id="kpi-total">—</div>
           <div class="kpi-label">Edificios totales</div>
         </div>
-
         <div class="kpi-card kpi-card--accent" id="kpi-card-affected">
           <div class="kpi-value" id="kpi-affected">—</div>
           <div class="kpi-label">Afectados Plan Reside</div>
         </div>
-
         <div class="kpi-card">
           <div class="kpi-value" id="kpi-pct">—</div>
           <div class="kpi-label">% afectados</div>
@@ -56,8 +54,6 @@
       </section>
 
       <section class="legend-section" id="mobile-legend">
-        <div class="legend-title">Leyenda</div>
-        <!-- Legend items will be shown/hidden via JS -->
         <div class="legend-grid">
           <div class="legend-item" id="legend-residential">
             <span class="legend-swatch legend-swatch--residential"></span>
@@ -86,9 +82,8 @@
       </div>
     </section>
 
-    <!-- Desktop side panel -->
+    <!-- DESKTOP SIDE PANEL (hidden on mobile) -->
     <aside id="panel" class="panel">
-
       <div class="panel-mode-hint" id="panel-mode-hint" style="display:none">
         <span class="mode-hint-icon">ℹ</span>
         En modo Plan Reside solo puedes seleccionar edificios afectados (en rojo)
@@ -103,7 +98,6 @@
       </div>
 
       <section class="building-detail" id="building-detail" style="display:none">
-        <!-- Same content as before -->
         <div class="detail-header">
           <div class="detail-header-main">
             <div class="detail-ref" id="detail-ref">—</div>
@@ -121,38 +115,14 @@
         </div>
 
         <div class="props-grid">
-          <div class="prop-row">
-            <span class="prop-key">Uso principal</span>
-            <span class="prop-val" id="prop-use">—</span>
-          </div>
-          <div class="prop-row">
-            <span class="prop-key">Año construcción</span>
-            <span class="prop-val" id="prop-year">—</span>
-          </div>
-          <div class="prop-row">
-            <span class="prop-key">Referencia</span>
-            <span class="prop-val" id="prop-reference">—</span>
-          </div>
-          <div class="prop-row">
-            <span class="prop-key">Unidades catastrales</span>
-            <span class="prop-val" id="prop-units">—</span>
-          </div>
-          <div class="prop-row">
-            <span class="prop-key">Viviendas</span>
-            <span class="prop-val" id="prop-dwellings">—</span>
-          </div>
-          <div class="prop-row">
-            <span class="prop-key">Sup. construida</span>
-            <span class="prop-val" id="prop-area">—</span>
-          </div>
-          <div class="prop-row">
-            <span class="prop-key">Plantas s/rasante</span>
-            <span class="prop-val" id="prop-floors">—</span>
-          </div>
-          <div class="prop-row">
-            <span class="prop-key">Estado</span>
-            <span class="prop-val" id="prop-condition">—</span>
-          </div>
+          <div class="prop-row"><span class="prop-key">Uso principal</span><span class="prop-val" id="prop-use">—</span></div>
+          <div class="prop-row"><span class="prop-key">Año construcción</span><span class="prop-val" id="prop-year">—</span></div>
+          <div class="prop-row"><span class="prop-key">Referencia</span><span class="prop-val" id="prop-reference">—</span></div>
+          <div class="prop-row"><span class="prop-key">Unidades catastrales</span><span class="prop-val" id="prop-units">—</span></div>
+          <div class="prop-row"><span class="prop-key">Viviendas</span><span class="prop-val" id="prop-dwellings">—</span></div>
+          <div class="prop-row"><span class="prop-key">Sup. construida</span><span class="prop-val" id="prop-area">—</span></div>
+          <div class="prop-row"><span class="prop-key">Plantas s/rasante</span><span class="prop-val" id="prop-floors">—</span></div>
+          <div class="prop-row"><span class="prop-key">Estado</span><span class="prop-val" id="prop-condition">—</span></div>
         </div>
 
         <div class="reside-badge" id="reside-badge" style="display:none">
@@ -162,14 +132,11 @@
       </section>
     </aside>
 
-    <!-- Mobile Bottom Sheet -->
+    <!-- MOBILE BOTTOM SHEET -->
     <div id="mobile-bottom-sheet" class="mobile-bottom-sheet">
       <div class="bottom-sheet-handle"></div>
       <button id="close-bottom-sheet" class="close-sheet-btn" aria-label="Cerrar">✕</button>
-      
-      <div class="mobile-detail-content" id="mobile-detail-content">
-        <!-- Content is cloned from desktop panel via JS -->
-      </div>
+      <div class="mobile-detail-content" id="mobile-detail-content"></div>
     </div>
   </main>
 
