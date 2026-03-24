@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edificios Chamberí — Plan Reside</title>
+  <link rel="icon" href="data:,">
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -25,12 +26,12 @@
       <span class="topbar-title">Edificios · Plan Reside</span>
     </div>
     <div class="topbar-controls">
-		<button id="btn-plan-reside" class="btn-toggle" aria-pressed="false" type="button">
-		  <span class="toggle-switch" aria-hidden="true">
-			<span class="toggle-thumb"></span>
-		  </span>
-		  <span class="toggle-label">Plan Reside</span>
-		</button>
+      <button id="btn-plan-reside" class="btn-toggle" aria-pressed="false" type="button">
+        <span class="toggle-track" aria-hidden="true">
+          <span class="toggle-thumb"></span>
+        </span>
+        <span class="toggle-label">Plan Reside</span>
+      </button>
       <div class="topbar-source">Fuente: Catastro · Madrid</div>
     </div>
   </header>
@@ -42,9 +43,9 @@
     <div id="map"></div>
 
     <!-- RIGHT PANEL -->
-    <aside id="panel" class="panel panel--empty">
+    <aside id="panel" class="panel">
 
-      <!-- KPI CARDS (always visible) -->
+      <!-- KPI CARDS -->
       <section class="kpi-section">
         <div class="kpi-card">
           <div class="kpi-value" id="kpi-total">—</div>
@@ -61,29 +62,40 @@
       </section>
 
       <!-- LEGEND -->
-      <section class="legend-section" id="legend">
+      <section class="legend-section">
         <div class="legend-title">Leyenda</div>
         <div class="legend-item">
-          <span class="legend-swatch legend-swatch--default"></span>
-          <span>Edificio residencial</span>
+          <span class="legend-swatch legend-swatch--residential"></span>
+          <span>Residencial</span>
         </div>
         <div class="legend-item">
           <span class="legend-swatch legend-swatch--other"></span>
           <span>Otro uso</span>
         </div>
-        <div class="legend-item legend-item--reside" id="legend-reside" style="display:none">
+        <div class="legend-item" id="legend-reside" style="display:none">
           <span class="legend-swatch legend-swatch--reside"></span>
           <span>En riesgo · Plan Reside</span>
         </div>
+        <div class="legend-item">
+          <span class="legend-swatch legend-swatch--hover"></span>
+          <span>Hover / seleccionado</span>
+        </div>
       </section>
+
+      <!-- MODE HINT (shown in Plan Reside mode) -->
+      <div class="panel-mode-hint" id="panel-mode-hint" style="display:none">
+        <span class="mode-hint-icon">ℹ</span>
+        En este modo solo puedes seleccionar edificios afectados (en rojo)
+      </div>
 
       <!-- EMPTY STATE -->
       <div class="panel-empty-state" id="panel-empty">
         <div class="empty-icon">⬡</div>
-        <p>Haz clic en un edificio<br/>para ver su ficha catastral</p>
+        <p class="empty-title">Selecciona un edificio</p>
+        <p class="empty-sub">Haz clic sobre cualquier edificio en el mapa para ver su ficha catastral</p>
       </div>
 
-      <!-- BUILDING DETAIL (hidden until click) -->
+      <!-- BUILDING DETAIL -->
       <section class="building-detail" id="building-detail" style="display:none">
 
         <div class="detail-header">
@@ -94,16 +106,20 @@
         </div>
 
         <!-- Façade image -->
-        <div class="facade-wrapper" id="facade-wrapper">
+        <div class="facade-wrapper">
           <img id="facade-img" class="facade-img" src="" alt="Fachada catastral" loading="lazy" />
           <div class="facade-placeholder" id="facade-placeholder">Sin imagen de fachada</div>
         </div>
 
-        <!-- Properties grid -->
+        <!-- Properties -->
         <div class="props-grid">
           <div class="prop-row">
             <span class="prop-key">Uso principal</span>
             <span class="prop-val" id="prop-use">—</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-key">Año construcción</span>
+            <span class="prop-val" id="prop-year">—</span>
           </div>
           <div class="prop-row">
             <span class="prop-key">Unidades catastrales</span>
@@ -122,10 +138,6 @@
             <span class="prop-val" id="prop-floors">—</span>
           </div>
           <div class="prop-row">
-            <span class="prop-key">Año construcción</span>
-            <span class="prop-val" id="prop-year">—</span>
-          </div>
-          <div class="prop-row">
             <span class="prop-key">Estado</span>
             <span class="prop-val" id="prop-condition">—</span>
           </div>
@@ -142,7 +154,10 @@
     </aside>
   </main>
 
-  <!-- ─── LOADING OVERLAY ─── -->
+  <!-- TOAST -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- LOADING OVERLAY -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-inner">
       <div class="loading-spinner"></div>
