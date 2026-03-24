@@ -39,62 +39,69 @@ const CONFIG = {
     props.numberOfBuildingUnits === 1 &&
     props.currentUse === '1_residential',
 
-  // Tile layer — dark Carto basemap
-  tileUrl: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
+  
+  // Tile layer — light gray Carto basemap with labels
+  tileUrl: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
   tileAttribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
 
   // Style helpers
   styles: {
-    // Background Madrid layer
-    madrid: {
-      weight: 0.4,
-      color: '#1a2035',
-      fillColor: '#1c2232',
-      fillOpacity: 0.8,
-    },
-    // Default Chamberí building
-    chamberiDefault: {
-      weight: 0.8,
-      color: '#253048',
-      fillColor: '#2d4168',
-      fillOpacity: 0.75,
-    },
-    // Residential buildings (slightly lighter)
-    chamberiResidential: {
-      weight: 0.8,
-      color: '#2e4a72',
-      fillColor: '#3d6499',
-      fillOpacity: 0.75,
-    },
-    // Hovered
-    hover: {
-      weight: 1.5,
-      color: '#4f9cf9',
-      fillColor: '#4f9cf9',
-      fillOpacity: 0.55,
-    },
-    // Selected
-    selected: {
-      weight: 2,
-      color: '#4f9cf9',
-      fillColor: '#4f9cf9',
-      fillOpacity: 0.7,
-    },
-    // Plan Reside: at-risk buildings
-    reside: {
-      weight: 1.5,
-      color: '#cc2020',
-      fillColor: '#ff4d4d',
-      fillOpacity: 0.82,
-    },
-    // Plan Reside: non-affected buildings (muted)
-    resideMuted: {
-      weight: 0.5,
-      color: '#1a2035',
-      fillColor: '#1e2640',
-      fillOpacity: 0.5,
-    },
-  },
+	  // Background Madrid layer
+	  madrid: {
+		weight: 0.5,
+		color: '#cfd6dd',
+		fillColor: '#e7ebef',
+		fillOpacity: 0.55,
+	  },
+
+	  // Default Chamberí building
+	  chamberiDefault: {
+		weight: 0.9,
+		color: '#b9c3cc',
+		fillColor: '#dfe5ea',
+		fillOpacity: 0.82,
+	  },
+
+	  // Residential buildings
+	  chamberiResidential: {
+		weight: 0.9,
+		color: '#aebac4',
+		fillColor: '#d6dde3',
+		fillOpacity: 0.9,
+	  },
+
+	  // Hovered
+	  hover: {
+		weight: 1.8,
+		color: '#c2185b',
+		fillColor: '#f8bbd0',
+		fillOpacity: 0.75,
+	  },
+
+	  // Selected
+	  selected: {
+		weight: 2.2,
+		color: '#aa1144',
+		fillColor: '#f4a3bf',
+		fillOpacity: 0.9,
+	  },
+
+	  // Plan Reside: at-risk buildings
+	  reside: {
+		weight: 1.6,
+		color: '#b71c1c',
+		fillColor: '#e53935',
+		fillOpacity: 0.88,
+	  },
+
+	  // Plan Reside: non-affected buildings (muted)
+	  resideMuted: {
+		weight: 0.6,
+		color: '#d4dbe1',
+		fillColor: '#edf1f4',
+		fillOpacity: 0.45,
+	  },
+	},
 };
 
 /* ═══════════════════════════════════════════════
@@ -281,14 +288,6 @@ function computeKPIs(geojsonData) {
    ═══════════════════════════════════════════════ */
 function onEachFeature(feature, layer) {
   // Tooltip (reference on hover)
-  const ref = (feature.properties || {}).reference || (feature.properties || {}).localId || '';
-  if (ref) {
-    layer.bindTooltip(ref, {
-      className: 'bld-tooltip',
-      sticky: true,
-      offset: [10, 0],
-    });
-  }
 
   layer.on({
     mouseover(e) {
