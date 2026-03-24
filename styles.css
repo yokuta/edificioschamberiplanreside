@@ -847,23 +847,22 @@ body.plan-reside-active .leaflet-interactive {
 }
 
 /* ===================== MOBILE HEADER SIMPLIFICATION ===================== */
+@/* ===================== MOBILE HEADER SIMPLIFICATION ===================== */
 @media (max-width: 700px) {
   .topbar-title,
   .topbar-source {
     display: none;
   }
-  
-  .topbar-brand {
-    gap: 0;
-  }
-  
-  .topbar {
-    padding: 0 14px;
-  }
-  
-  .mobile-bottom-sheet {
-    max-height: 42%; /* much shorter now */
-  }
+  .topbar-brand { gap: 0; }
+  .topbar { padding: 0 14px; }
+  .mobile-bottom-sheet { max-height: 42%; }
 }
 
+/* Aseguramos que en escritorio los KPIs vuelvan a ser grandes */
+@media (min-width: 701px) {
+  .kpi-value { font-size: 24px; }
+  .mobile-kpis { display: none; }
+  .mobile-top { display: none; }
+  .panel { display: flex; flex-direction: column; }
+}
 /* Rest of your existing styles remain exactly the same */
