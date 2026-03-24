@@ -46,7 +46,6 @@ const CONFIG = {
 
   // Style helpers
   styles: {
-	  // Base Madrid layer
 	  madrid: {
 		weight: 0.5,
 		color: '#d5dbe3',
@@ -54,7 +53,6 @@ const CONFIG = {
 		fillOpacity: 0.5,
 	  },
 
-	  // Residential buildings
 	  chamberiResidential: {
 		weight: 0.9,
 		color: '#5f84b3',
@@ -62,7 +60,6 @@ const CONFIG = {
 		fillOpacity: 0.78,
 	  },
 
-	  // Other uses
 	  chamberiDefault: {
 		weight: 0.9,
 		color: '#7f97ad',
@@ -70,23 +67,27 @@ const CONFIG = {
 		fillOpacity: 0.72,
 	  },
 
-	  // Hover
 	  hover: {
 		weight: 1.8,
 		color: '#1f4f82',
 		fillColor: '#6fa8dc',
-		fillOpacity: 0.9,
+		fillOpacity: 0.92,
 	  },
 
-	  // Selected
-	  selected: {
+	  selectedDefault: {
 		weight: 2,
-		color: '#c2185b',
-		fillColor: '#f3a6c1',
-		fillOpacity: 0.88,
+		color: '#1f4f82',
+		fillColor: '#6fa8dc',
+		fillOpacity: 0.92,
 	  },
 
-	  // Plan Reside affected
+	  selectedReside: {
+		weight: 2,
+		color: '#b71c1c',
+		fillColor: '#e53935',
+		fillOpacity: 0.92,
+	  },
+
 	  reside: {
 		weight: 1.6,
 		color: '#b71c1c',
@@ -94,7 +95,6 @@ const CONFIG = {
 		fillOpacity: 0.9,
 	  },
 
-	  // Plan Reside muted
 	  resideMuted: {
 		weight: 0.6,
 		color: '#d5dde5',
@@ -110,6 +110,7 @@ const CONFIG = {
 const state = {
   planResideActive: false,
   selectedFeature: null,
+  selectedLayer: null,
   chamberiBuildingsData: null,
   totalBuildings: 0,
   affectedBuildings: 0,
@@ -148,7 +149,11 @@ let chamberiLayer  = null;
 function getFeatureStyle(feature, isSelected = false) {
   const p = feature.properties || {};
 
-  if (isSelected) return CONFIG.styles.selected;
+  if (isSelected) {
+    return state.planResideActive
+      ? CONFIG.styles.selectedReside
+      : CONFIG.styles.selectedDefault;
+  }
 
   if (state.planResideActive) {
     if (CONFIG.planResideFilter(p)) return CONFIG.styles.reside;
@@ -158,6 +163,7 @@ function getFeatureStyle(feature, isSelected = false) {
   if (p.currentUse === '1_residential') return CONFIG.styles.chamberiResidential;
   return CONFIG.styles.chamberiDefault;
 }
+
 
 /* ═══════════════════════════════════════════════
    UTILITY — Label helpers
@@ -252,6 +258,10 @@ function updatePanel(feature) {
 }
 
 function clearPanel() {
+  if (state.selectedLayer && chamberiLayer) {
+    state.selectedLayer.setStyle(getFeatureStyle(state.selectedLayer.feature, false));
+  }
+
   document.getElementById('panel-empty').style.display = 'flex';
   document.getElementById('building-detail').style.display = 'none';
 
@@ -288,17 +298,41 @@ function onEachFeature(feature, layer) {
   layer.on({
     mouseover: (e) => {
       const target = e.target;
-      target.setStyle(CONFIG.styles.hover);
+
+      if (state.selectedLayer !== target) {
+        target.setStyle(CONFIG.styles.hover);
+      }
+
       target.bringToFront();
     },
 
     mouseout: (e) => {
       const target = e.target;
-      target.setStyle(getFeatureStyle(feature));
+
+      if (state.selectedLayer === target) {
+        target.setStyle(getFeatureStyle(feature, true));
+      } else {
+        target.setStyle(getFeatureStyle(feature, false));
+      }
     },
 
     click: (e) => {
       L.DomEvent.stopPropagation(e);
+
+      const target = e.target;
+
+      if (state.selectedLayer && state.selectedLayer !== target) {
+        state.selectedLayer.setStyle(
+          getFeatureStyle(state.selectedLayer.feature, false)
+        );
+      }
+
+      state.selectedLayer = target;
+      state.selectedFeature = feature;
+
+      target.setStyle(getFeatureStyle(feature, true));
+      target.bringToFront();
+
       updatePanel(feature);
     }
   });
@@ -313,9 +347,12 @@ function applyResideStyles() {
   chamberiLayer.eachLayer(layer => {
     const f = layer.feature;
     if (!f) return;
-    layer.setStyle(getFeatureStyle(f));
+
+    const isSelected = state.selectedLayer === layer;
+    layer.setStyle(getFeatureStyle(f, isSelected));
   });
 }
+
 
 document.getElementById('btn-plan-reside').addEventListener('click', function () {
   state.planResideActive = !state.planResideActive;
