@@ -1,0 +1,413 @@
+/**
+ * EDIFICIOS CHAMBERÍ · PLAN RESIDE
+ * script.js — Main application logic
+ *
+ * Dependencies: Leaflet 1.9.x (loaded via CDN in HTML)
+ *
+ * GeoJSON files expected:
+ *   data/chamberi_buildings.geojson   ← Chamberí buildings (main dataset)
+ *   data/madrid_buildings.geojson     ← Full Madrid buildings (background layer, optional)
+ *
+ * Both files must be in WGS84 (EPSG:4326).
+ * If your data is in EPSG:25830, run the Python reprojection script first.
+ */
+
+'use strict';
+
+/* ═══════════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════════ */
+const CONFIG = {
+  // Chamberí approximate centre
+  center: [40.4377, -3.7003],
+  initialZoom: 15,
+  minZoom: 14,
+  maxZoom: 19,
+
+  // Bounding box to constrain panning [SW, NE]
+  maxBounds: [
+    [40.415, -3.730],
+    [40.460, -3.670]
+  ],
+
+  // GeoJSON paths (relative to index.html)
+  chamberiBuildingsPath: 'data/chamberi_buildings.geojson',
+  madridBuildingsPath:   null,   // set to null to skip
+
+  // Plan Reside filter criteria
+  planResideFilter: (props) =>
+    props.numberOfBuildingUnits === 1 &&
+    props.currentUse === '1_residential',
+
+  // Tile layer — dark Carto basemap
+  tileUrl: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
+  tileAttribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+
+  // Style helpers
+  styles: {
+    // Background Madrid layer
+    madrid: {
+      weight: 0.4,
+      color: '#1a2035',
+      fillColor: '#1c2232',
+      fillOpacity: 0.8,
+    },
+    // Default Chamberí building
+    chamberiDefault: {
+      weight: 0.8,
+      color: '#253048',
+      fillColor: '#2d4168',
+      fillOpacity: 0.75,
+    },
+    // Residential buildings (slightly lighter)
+    chamberiResidential: {
+      weight: 0.8,
+      color: '#2e4a72',
+      fillColor: '#3d6499',
+      fillOpacity: 0.75,
+    },
+    // Hovered
+    hover: {
+      weight: 1.5,
+      color: '#4f9cf9',
+      fillColor: '#4f9cf9',
+      fillOpacity: 0.55,
+    },
+    // Selected
+    selected: {
+      weight: 2,
+      color: '#4f9cf9',
+      fillColor: '#4f9cf9',
+      fillOpacity: 0.7,
+    },
+    // Plan Reside: at-risk buildings
+    reside: {
+      weight: 1.5,
+      color: '#cc2020',
+      fillColor: '#ff4d4d',
+      fillOpacity: 0.82,
+    },
+    // Plan Reside: non-affected buildings (muted)
+    resideMuted: {
+      weight: 0.5,
+      color: '#1a2035',
+      fillColor: '#1e2640',
+      fillOpacity: 0.5,
+    },
+  },
+};
+
+/* ═══════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════ */
+const state = {
+  planResideActive: false,
+  selectedFeature: null,
+  selectedLayer: null,
+  chamberiBuildingsData: null,
+  totalBuildings: 0,
+  affectedBuildings: 0,
+  totalDwellings: 0,
+};
+
+/* ═══════════════════════════════════════════════
+   MAP INITIALISATION
+   ═══════════════════════════════════════════════ */
+const map = L.map('map', {
+  center: CONFIG.center,
+  zoom: CONFIG.initialZoom,
+  minZoom: CONFIG.minZoom,
+  maxZoom: CONFIG.maxZoom,
+  maxBounds: CONFIG.maxBounds,
+  maxBoundsViscosity: 0.85,
+  zoomControl: true,
+});
+
+L.tileLayer(CONFIG.tileUrl, {
+  attribution: CONFIG.tileAttribution,
+  subdomains: 'abcd',
+  maxZoom: 19,
+}).addTo(map);
+
+/* ═══════════════════════════════════════════════
+   LAYER REFERENCES
+   ═══════════════════════════════════════════════ */
+let madridLayer    = null;
+let chamberiLayer  = null;
+
+/* ═══════════════════════════════════════════════
+   UTILITY — get style for a feature
+   ═══════════════════════════════════════════════ */
+function getFeatureStyle(feature, isSelected = false) {
+  const p = feature.properties || {};
+
+  if (isSelected) return CONFIG.styles.selected;
+
+  if (state.planResideActive) {
+    if (CONFIG.planResideFilter(p)) return CONFIG.styles.reside;
+    return CONFIG.styles.resideMuted;
+  }
+
+  if (p.currentUse === '1_residential') return CONFIG.styles.chamberiResidential;
+  return CONFIG.styles.chamberiDefault;
+}
+
+/* ═══════════════════════════════════════════════
+   UTILITY — Label helpers
+   ═══════════════════════════════════════════════ */
+const USE_LABELS = {
+  '1_residential':    'Residencial',
+  '2_agriculture':    'Agrícola',
+  '3_industrial':     'Industrial',
+  '4_commercial':     'Comercial',
+  '5_publicServices': 'Servicios Públicos',
+  '6_recreational':   'Recreativo',
+  '7_otherUse':       'Otro uso',
+};
+
+function labelUse(raw) {
+  if (!raw) return '—';
+  return USE_LABELS[raw] || raw;
+}
+
+function labelYear(isoDate) {
+  if (!isoDate) return '—';
+  const y = isoDate.slice(0, 4);
+  return y === '0001' || y === '1900' ? '—' : y;
+}
+
+function labelCondition(raw) {
+  if (!raw) return '—';
+  const map = {
+    functional:    'Funcional',
+    ruin:          'En ruinas',
+    underConstruction: 'En construcción',
+  };
+  return map[raw] || raw;
+}
+
+function formatArea(val, uom) {
+  if (val == null) return '—';
+  const unit = uom || 'm²';
+  return `${Number(val).toLocaleString('es-ES')} ${unit}`;
+}
+
+/* ═══════════════════════════════════════════════
+   PANEL — update with feature data
+   ═══════════════════════════════════════════════ */
+function updatePanel(feature) {
+  const p = feature.properties || {};
+
+  // Show detail, hide empty state
+  document.getElementById('panel-empty').style.display  = 'none';
+  document.getElementById('building-detail').style.display = 'flex';
+
+  // Reference & link
+  const ref = p.reference || p.localId || p.gml_id || '—';
+  document.getElementById('detail-ref').textContent = ref;
+
+  const infoUrl = p.informationSystem || '#';
+  const linkEl = document.getElementById('detail-link');
+  linkEl.href = infoUrl !== '#' ? infoUrl : '#';
+  linkEl.style.display = infoUrl !== '#' ? 'inline-flex' : 'none';
+
+  // Façade image
+  const facadeImg = document.getElementById('facade-img');
+  const facadePlaceholder = document.getElementById('facade-placeholder');
+
+  facadeImg.classList.remove('loaded');
+  facadePlaceholder.style.display = 'flex';
+
+  if (p.documentLink) {
+    facadeImg.src = p.documentLink;
+    facadeImg.onload = () => {
+      facadeImg.classList.add('loaded');
+      facadePlaceholder.style.display = 'none';
+    };
+    facadeImg.onerror = () => {
+      facadeImg.classList.remove('loaded');
+      facadePlaceholder.style.display = 'flex';
+    };
+  }
+
+  // Properties
+  document.getElementById('prop-use').textContent       = labelUse(p.currentUse);
+  document.getElementById('prop-units').textContent     = p.numberOfBuildingUnits != null ? p.numberOfBuildingUnits : '—';
+  document.getElementById('prop-dwellings').textContent = p.numberOfDwellings != null ? p.numberOfDwellings : '—';
+  document.getElementById('prop-area').textContent      = formatArea(p.value, p.value_uom);
+  document.getElementById('prop-floors').textContent    = p.numberOfFloorsAboveGround != null ? p.numberOfFloorsAboveGround : '—';
+  document.getElementById('prop-year').textContent      = labelYear(p.beginning);
+  document.getElementById('prop-condition').textContent = labelCondition(p.conditionOfConstruction);
+
+  // Plan Reside badge
+  const badge = document.getElementById('reside-badge');
+  badge.style.display = CONFIG.planResideFilter(p) ? 'flex' : 'none';
+}
+
+function clearPanel() {
+  document.getElementById('panel-empty').style.display  = 'flex';
+  document.getElementById('building-detail').style.display = 'none';
+  state.selectedFeature = null;
+  state.selectedLayer   = null;
+}
+
+/* ═══════════════════════════════════════════════
+   KPI — compute & render
+   ═══════════════════════════════════════════════ */
+function computeKPIs(geojsonData) {
+  let total = 0, affected = 0, dwellings = 0;
+
+  geojsonData.features.forEach(f => {
+    const p = f.properties || {};
+    total++;
+    if (CONFIG.planResideFilter(p)) affected++;
+    if (p.numberOfDwellings) dwellings += Number(p.numberOfDwellings);
+  });
+
+  state.totalBuildings   = total;
+  state.affectedBuildings = affected;
+  state.totalDwellings   = dwellings;
+
+  const pct = total > 0 ? ((affected / total) * 100).toFixed(1) : '0';
+
+  document.getElementById('kpi-total').textContent     = total.toLocaleString('es-ES');
+  document.getElementById('kpi-affected').textContent  = affected.toLocaleString('es-ES');
+  document.getElementById('kpi-pct').textContent       = `${pct}%`;
+  document.getElementById('kpi-dwellings').textContent = dwellings.toLocaleString('es-ES');
+}
+
+/* ═══════════════════════════════════════════════
+   LAYER EVENT HANDLERS
+   ═══════════════════════════════════════════════ */
+function onEachFeature(feature, layer) {
+  // Tooltip (reference on hover)
+  const ref = (feature.properties || {}).reference || (feature.properties || {}).localId || '';
+  if (ref) {
+    layer.bindTooltip(ref, {
+      className: 'bld-tooltip',
+      sticky: true,
+      offset: [10, 0],
+    });
+  }
+
+  layer.on({
+    mouseover(e) {
+      if (state.selectedLayer === layer) return;
+      layer.setStyle(CONFIG.styles.hover);
+      layer.bringToFront();
+    },
+    mouseout(e) {
+      if (state.selectedLayer === layer) return;
+      layer.setStyle(getFeatureStyle(feature));
+    },
+    click(e) {
+      L.DomEvent.stopPropagation(e);
+
+      // Deselect previous
+      if (state.selectedLayer && state.selectedLayer !== layer) {
+        state.selectedLayer.setStyle(getFeatureStyle(state.selectedFeature));
+      }
+
+      state.selectedFeature = feature;
+      state.selectedLayer   = layer;
+      layer.setStyle(CONFIG.styles.selected);
+      layer.bringToFront();
+
+      updatePanel(feature);
+    },
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   PLAN RESIDE — toggle & restyle
+   ═══════════════════════════════════════════════ */
+function applyResideStyles() {
+  if (!chamberiLayer) return;
+  chamberiLayer.eachLayer(layer => {
+    const f = layer.feature;
+    if (!f) return;
+    if (state.selectedLayer === layer) return; // keep selection style
+    layer.setStyle(getFeatureStyle(f));
+  });
+}
+
+document.getElementById('btn-plan-reside').addEventListener('click', function () {
+  state.planResideActive = !state.planResideActive;
+  this.setAttribute('aria-pressed', String(state.planResideActive));
+
+  // Toggle body class for KPI highlight
+  document.body.classList.toggle('plan-reside-active', state.planResideActive);
+
+  // Show/hide legend row
+  document.getElementById('legend-reside').style.display =
+    state.planResideActive ? 'flex' : 'none';
+
+  applyResideStyles();
+});
+
+/* ═══════════════════════════════════════════════
+   LOAD DATA
+   ═══════════════════════════════════════════════ */
+async function loadJSON(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} loading ${url}`);
+  return res.json();
+}
+
+function hideLoading() {
+  const overlay = document.getElementById('loading-overlay');
+  overlay.classList.add('hidden');
+  setTimeout(() => { overlay.style.display = 'none'; }, 450);
+}
+
+async function init() {
+  try {
+    // --- Optional: Madrid background layer ---
+    if (CONFIG.madridBuildingsPath) {
+      try {
+        const madridData = await loadJSON(CONFIG.madridBuildingsPath);
+        madridLayer = L.geoJSON(madridData, {
+          style: CONFIG.styles.madrid,
+          interactive: false,
+        }).addTo(map);
+      } catch (err) {
+        console.warn('Madrid background layer not loaded (optional):', err.message);
+      }
+    }
+
+    // --- Main: Chamberí layer ---
+    const chamberiData = await loadJSON(CONFIG.chamberiBuildingsPath);
+    state.chamberiBuildingsData = chamberiData;
+
+    chamberiLayer = L.geoJSON(chamberiData, {
+      style: f => getFeatureStyle(f),
+      onEachFeature,
+    }).addTo(map);
+
+    // Fit map to Chamberí bounds
+    const bounds = chamberiLayer.getBounds();
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [20, 20] });
+    }
+
+    // KPIs
+    computeKPIs(chamberiData);
+
+    hideLoading();
+
+  } catch (err) {
+    console.error('Error loading data:', err);
+    document.querySelector('.loading-text').textContent =
+      'Error al cargar los datos. Revisa la consola.';
+  }
+}
+
+// Click on map background clears selection
+map.on('click', () => {
+  if (state.selectedLayer) {
+    state.selectedLayer.setStyle(getFeatureStyle(state.selectedFeature));
+  }
+  clearPanel();
+});
+
+init();

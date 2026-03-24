@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edificios Chamberí — Plan Reside</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ─── TOP BAR ─── -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-district">CHAMBERÍ</span>
+      <span class="topbar-title">Edificios · Plan Reside</span>
+    </div>
+    <div class="topbar-controls">
+      <button id="btn-plan-reside" class="btn-toggle" aria-pressed="false">
+        <span class="toggle-dot"></span>
+        <span class="toggle-label">Plan Reside</span>
+      </button>
+      <div class="topbar-source">Fuente: Catastro · Madrid</div>
+    </div>
+  </header>
+
+  <!-- ─── MAIN LAYOUT ─── -->
+  <main class="layout">
+
+    <!-- MAP -->
+    <div id="map"></div>
+
+    <!-- RIGHT PANEL -->
+    <aside id="panel" class="panel panel--empty">
+
+      <!-- KPI CARDS (always visible) -->
+      <section class="kpi-section">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-total">—</div>
+          <div class="kpi-label">Edificios totales</div>
+        </div>
+        <div class="kpi-card kpi-card--accent" id="kpi-card-affected">
+          <div class="kpi-value" id="kpi-affected">—</div>
+          <div class="kpi-label">Afectados Plan Reside</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-pct">—</div>
+          <div class="kpi-label">% afectados</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-dwellings">—</div>
+          <div class="kpi-label">Viviendas totales</div>
+        </div>
+      </section>
+
+      <!-- LEGEND -->
+      <section class="legend-section" id="legend">
+        <div class="legend-title">Leyenda</div>
+        <div class="legend-item">
+          <span class="legend-swatch legend-swatch--default"></span>
+          <span>Edificio residencial</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch legend-swatch--other"></span>
+          <span>Otro uso</span>
+        </div>
+        <div class="legend-item legend-item--reside" id="legend-reside" style="display:none">
+          <span class="legend-swatch legend-swatch--reside"></span>
+          <span>En riesgo · Plan Reside</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch legend-swatch--selected"></span>
+          <span>Seleccionado</span>
+        </div>
+      </section>
+
+      <!-- EMPTY STATE -->
+      <div class="panel-empty-state" id="panel-empty">
+        <div class="empty-icon">⬡</div>
+        <p>Haz clic en un edificio<br/>para ver su ficha catastral</p>
+      </div>
+
+      <!-- BUILDING DETAIL (hidden until click) -->
+      <section class="building-detail" id="building-detail" style="display:none">
+
+        <div class="detail-header">
+          <div class="detail-ref" id="detail-ref">—</div>
+          <a class="detail-link" id="detail-link" href="#" target="_blank" rel="noopener">
+            Ver en Catastro ↗
+          </a>
+        </div>
+
+        <!-- Façade image -->
+        <div class="facade-wrapper" id="facade-wrapper">
+          <img id="facade-img" class="facade-img" src="" alt="Fachada catastral" loading="lazy" />
+          <div class="facade-placeholder" id="facade-placeholder">Sin imagen de fachada</div>
+        </div>
+
+        <!-- Properties grid -->
+        <div class="props-grid">
+          <div class="prop-row">
+            <span class="prop-key">Uso principal</span>
+            <span class="prop-val" id="prop-use">—</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-key">Unidades catastrales</span>
+            <span class="prop-val" id="prop-units">—</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-key">Viviendas</span>
+            <span class="prop-val" id="prop-dwellings">—</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-key">Sup. construida</span>
+            <span class="prop-val" id="prop-area">—</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-key">Plantas s/rasante</span>
+            <span class="prop-val" id="prop-floors">—</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-key">Año construcción</span>
+            <span class="prop-val" id="prop-year">—</span>
+          </div>
+          <div class="prop-row">
+            <span class="prop-key">Estado</span>
+            <span class="prop-val" id="prop-condition">—</span>
+          </div>
+        </div>
+
+        <!-- Plan Reside badge -->
+        <div class="reside-badge" id="reside-badge" style="display:none">
+          <span class="reside-badge-dot"></span>
+          Afectado por Plan Reside
+        </div>
+
+      </section>
+
+    </aside>
+  </main>
+
+  <!-- ─── LOADING OVERLAY ─── -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-inner">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Cargando edificios…</div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
