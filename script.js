@@ -362,6 +362,14 @@ function clearSelection({ clearPanelToo = true } = {}) {
   }
 }
 
+function clearHoveredLayer() {
+  if (!state.hoveredLayer) return;
+
+  const hovered = state.hoveredLayer;
+  state.hoveredLayer = null;
+  applyRestingStyle(hovered);
+}
+
 function selectAffectedLayerInResideMode(layer) {
   if (state.selectedLayer && state.selectedLayer !== layer) {
     applyRestingStyle(state.selectedLayer);
@@ -389,24 +397,23 @@ function onEachFeature(feature, layer) {
 
   layer.on({
     mouseover() {
-      state.hoveredLayer = layer;
+	  state.hoveredLayer = layer;
 
-      if (state.planResideActive) {
-        if (isAffected(props)) {
-          layer.setStyle(
-            state.selectedLayer === layer
-              ? CONFIG.styles.selectedReside
-              : CONFIG.styles.hoverReside
-          );
-          layer.bringToFront();
-        } else {
-          if (layer._path) layer._path.style.cursor = 'not-allowed';
-        }
-      } else {
-        layer.setStyle(CONFIG.styles.hover);
-        layer.bringToFront();
-      }
-    },
+	  if (state.planResideActive) {
+		if (isAffected(props)) {
+		  layer.setStyle(
+			state.selectedLayer === layer
+			  ? CONFIG.styles.selectedReside
+			  : CONFIG.styles.hoverReside
+		  );
+		  layer.bringToFront();
+		} else {
+		  if (layer._path) layer._path.style.cursor = 'not-allowed';
+		}
+	  } else {
+		layer.setStyle(CONFIG.styles.hover);
+	  }
+	},
 
     mouseout() {
       if (state.hoveredLayer === layer) {
@@ -446,8 +453,24 @@ function onEachFeature(feature, layer) {
 function updateModeUI() {
   document.body.classList.toggle('plan-reside-active', state.planResideActive);
   document.getElementById('btn-plan-reside').setAttribute('aria-pressed', String(state.planResideActive));
-  document.getElementById('legend-reside').style.display = state.planResideActive ? 'flex' : 'none';
-  document.getElementById('legend-hover').style.display = state.planResideActive ? 'none' : 'flex';
+
+  const legendReside = document.getElementById('legend-reside');
+  const legendHover = document.getElementById('legend-hover');
+  const legendResidential = document.getElementById('legend-residential');
+  const legendOther = document.getElementById('legend-other');
+
+  if (state.planResideActive) {
+    if (legendResidential) legendResidential.style.display = 'none';
+    if (legendOther) legendOther.style.display = 'none';
+    if (legendHover) legendHover.style.display = 'none';
+    if (legendReside) legendReside.style.display = 'flex';
+  } else {
+    if (legendResidential) legendResidential.style.display = 'flex';
+    if (legendOther) legendOther.style.display = 'flex';
+    if (legendHover) legendHover.style.display = 'none';
+    if (legendReside) legendReside.style.display = 'none';
+  }
+
   document.getElementById('panel-mode-hint').style.display = state.planResideActive ? 'flex' : 'none';
   updateInstructionText();
 }
@@ -513,6 +536,7 @@ async function init() {
       'Error al cargar los datos. Revisa la consola.';
   }
 }
+
 
 
 map.getContainer().addEventListener('mousemove', (e) => {
