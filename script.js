@@ -5,78 +5,27 @@ const CONFIG = {
   initialZoom: 15,
   minZoom: 14,
   maxZoom: 19,
-  maxBounds: [
-    [40.415, -3.730],
-    [40.460, -3.670]
-  ],
+  maxBounds: [[40.415, -3.730], [40.460, -3.670]],
 
   chamberiBuildingsPath: 'data/chamberi_buildings.geojson',
   madridBuildingsPath: null,
 
   planResideFilter: (props) =>
-    Number(props.numberOfBuildingUnits) === 1 &&
-    props.currentUse === '1_residential',
+    Number(props.numberOfBuildingUnits) === 1 && props.currentUse === '1_residential',
 
   tileUrl: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  tileAttribution:
-    '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  tileAttribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
 
   styles: {
-    madrid: {
-      weight: 0.5,
-      color: '#d5dbe3',
-      fillColor: '#edf1f5',
-      fillOpacity: 0.5
-    },
-
-    chamberiResidential: {
-      weight: 0.9,
-      color: '#5f84b3',
-      fillColor: '#89abd3',
-      fillOpacity: 0.78
-    },
-
-    chamberiDefault: {
-      weight: 0.9,
-      color: '#7f97ad',
-      fillColor: '#bcc9d6',
-      fillOpacity: 0.72
-    },
-
-    hover: {
-      weight: 2,
-      color: '#1f4f82',
-      fillColor: '#4a90d9',
-      fillOpacity: 0.92
-    },
-
-    reside: {
-      weight: 1.6,
-      color: '#b71c1c',
-      fillColor: '#e53935',
-      fillOpacity: 0.9
-    },
-
-    hoverReside: {
-      weight: 2.1,
-      color: '#8b0000',
-      fillColor: '#ff6659',
-      fillOpacity: 0.95
-    },
-
-    selectedReside: {
-      weight: 2.5,
-      color: '#8b0000',
-      fillColor: '#e53935',
-      fillOpacity: 0.98
-    },
-
-    resideMuted: {
-      weight: 0.6,
-      color: '#d5dde5',
-      fillColor: '#edf1f4',
-      fillOpacity: 0.45
-    }
+    madrid: { weight: 0.5, color: '#d5dbe3', fillColor: '#edf1f5', fillOpacity: 0.5 },
+    chamberiResidential: { weight: 0.9, color: '#5f84b3', fillColor: '#89abd3', fillOpacity: 0.78 },
+    chamberiDefault: { weight: 0.9, color: '#7f97ad', fillColor: '#bcc9d6', fillOpacity: 0.72 },
+    hover: { weight: 2, color: '#1f4f82', fillColor: '#4a90d9', fillOpacity: 0.92 },
+    reside: { weight: 1.6, color: '#b71c1c', fillColor: '#e53935', fillOpacity: 0.9 },
+    hoverReside: { weight: 2.1, color: '#8b0000', fillColor: '#ff6659', fillOpacity: 0.95 },
+    selectedReside: { weight: 2.5, color: '#8b0000', fillColor: '#e53935', fillOpacity: 0.98 },
+    selectedNormal: { weight: 2.5, color: '#1f4f82', fillColor: '#4a90d9', fillOpacity: 0.98 },   // ← NUEVO
+    resideMuted: { weight: 0.6, color: '#d5dde5', fillColor: '#edf1f4', fillOpacity: 0.45 }
   }
 };
 
@@ -89,29 +38,17 @@ const state = {
   affectedBuildings: 0
 };
 
-// Add these lines after the existing state object
 const mobileBottomSheet = document.getElementById('mobile-bottom-sheet');
 const mobileDetailContent = document.getElementById('mobile-detail-content');
 const closeBottomSheetBtn = document.getElementById('close-bottom-sheet');
 
-const map = L.map('map', {
-  center: CONFIG.center,
-  zoom: CONFIG.initialZoom,
-  minZoom: CONFIG.minZoom,
-  maxZoom: CONFIG.maxZoom,
-  maxBounds: CONFIG.maxBounds,
-  maxBoundsViscosity: 0.85,
-  zoomControl: true
-});
+const map = L.map('map', { center: CONFIG.center, zoom: CONFIG.initialZoom, minZoom: CONFIG.minZoom, maxZoom: CONFIG.maxZoom, maxBounds: CONFIG.maxBounds, maxBoundsViscosity: 0.85, zoomControl: true });
 
-L.tileLayer(CONFIG.tileUrl, {
-  attribution: CONFIG.tileAttribution,
-  subdomains: 'abcd',
-  maxZoom: 19
-}).addTo(map);
+L.tileLayer(CONFIG.tileUrl, { attribution: CONFIG.tileAttribution, subdomains: 'abcd', maxZoom: 19 }).addTo(map);
 
 let madridLayer = null;
 let chamberiLayer = null;
+
 
 const USE_LABELS = {
   '1_residential': 'Residencial',
@@ -207,25 +144,24 @@ function isAffected(featureOrProps) {
   return CONFIG.planResideFilter(props || {});
 }
 
+
+
 function getRestingStyle(feature) {
   const props = feature.properties || {};
+  const isSelected = state.selectedLayer && state.selectedLayer.feature === feature;
+
+  if (isSelected) {
+    return state.planResideActive ? CONFIG.styles.selectedReside : CONFIG.styles.selectedNormal;
+  }
 
   if (state.planResideActive) {
-    if (isAffected(props)) {
-      if (state.selectedLayer && state.selectedLayer.feature === feature) {
-        return CONFIG.styles.selectedReside;
-      }
-      return CONFIG.styles.reside;
-    }
-    return CONFIG.styles.resideMuted;
+    return isAffected(props) ? CONFIG.styles.reside : CONFIG.styles.resideMuted;
   }
 
-  if (props.currentUse === '1_residential') {
-    return CONFIG.styles.chamberiResidential;
-  }
-
-  return CONFIG.styles.chamberiDefault;
+  return props.currentUse === '1_residential' ? CONFIG.styles.chamberiResidential : CONFIG.styles.chamberiDefault;
 }
+
+
 
 function applyRestingStyle(layer) {
   if (!layer || !layer.feature) return;
@@ -374,7 +310,6 @@ function clearSelection({ clearPanelToo = true } = {}) {
   if (state.selectedLayer) {
     applyRestingStyle(state.selectedLayer);
   }
-
   state.selectedLayer = null;
   state.selectedFeature = null;
 
@@ -383,14 +318,14 @@ function clearSelection({ clearPanelToo = true } = {}) {
     document.getElementById('building-detail').style.display = 'none';
   }
 
-  // Close mobile sheet
   if (window.innerWidth <= 700) {
     mobileBottomSheet.classList.remove('open');
-    setTimeout(() => {
-      mobileBottomSheet.style.display = 'none';
-    }, 300);
+    setTimeout(() => { mobileBottomSheet.style.display = 'none'; }, 300);
   }
 }
+
+
+
 
 function zoomToBuilding(layer) {
   if (!layer) return;
@@ -427,13 +362,14 @@ function selectAffectedLayerInResideMode(layer) {
 }
 
 function openInNormalMode(layer) {
-  state.selectedLayer = null;
-  state.selectedFeature = layer.feature;
-  updatePanel(layer.feature);
-
-  if (state.hoveredLayer !== layer) {
-    applyRestingStyle(layer);
+  if (state.selectedLayer && state.selectedLayer !== layer) {
+    applyRestingStyle(state.selectedLayer);
   }
+  state.selectedLayer = layer;
+  state.selectedFeature = layer.feature;
+  layer.setStyle(CONFIG.styles.selectedNormal);
+  layer.bringToFront();
+  updatePanel(layer.feature);
 }
 
 function onEachFeature(feature, layer) {
