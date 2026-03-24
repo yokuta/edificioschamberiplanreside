@@ -89,6 +89,11 @@ const state = {
   affectedBuildings: 0
 };
 
+// Add these lines after the existing state object
+const mobileBottomSheet = document.getElementById('mobile-bottom-sheet');
+const mobileDetailContent = document.getElementById('mobile-detail-content');
+const closeBottomSheetBtn = document.getElementById('close-bottom-sheet');
+
 const map = L.map('map', {
   center: CONFIG.center,
   zoom: CONFIG.initialZoom,
@@ -273,9 +278,11 @@ function updatePanel(feature) {
   const reference = getReference(props);
   const infoUrl = props.informationSystem || props.url || null;
 
+  // Desktop panel
   document.getElementById('panel-empty').style.display = 'none';
   document.getElementById('building-detail').style.display = 'flex';
 
+  // Fill desktop content (unchanged logic)
   document.getElementById('detail-ref').textContent = reference;
   document.getElementById('detail-subtitle').textContent = state.planResideActive && isAffected(props)
     ? 'Ficha del edificio · Plan Reside'
@@ -297,33 +304,34 @@ function updatePanel(feature) {
     linkEl.href = infoUrl;
     linkEl.style.display = 'inline-flex';
   } else {
-    linkEl.removeAttribute('href');
     linkEl.style.display = 'none';
   }
 
+  // Image handling (same as before)
   const img = document.getElementById('facade-img');
   const placeholder = document.getElementById('facade-placeholder');
-
   img.classList.remove('loaded');
   img.removeAttribute('src');
   placeholder.style.display = 'flex';
 
   if (props.documentLink) {
-    img.onload = () => {
-      img.classList.add('loaded');
-      placeholder.style.display = 'none';
-    };
-
-    img.onerror = () => {
-      img.classList.remove('loaded');
-      placeholder.style.display = 'flex';
-    };
-
+    img.onload = () => { img.classList.add('loaded'); placeholder.style.display = 'none'; };
+    img.onerror = () => { placeholder.style.display = 'flex'; };
     img.src = props.documentLink;
   }
 
   document.getElementById('reside-badge').style.display = isAffected(props) ? 'flex' : 'none';
+
+  // === MOBILE BOTTOM SHEET ===
+  if (window.innerWidth <= 700) {
+    // Clone the detail content for mobile
+    mobileDetailContent.innerHTML = document.getElementById('building-detail').innerHTML;
+    mobileBottomSheet.classList.add('open');
+    mobileBottomSheet.style.display = 'block';
+  }
 }
+
+
 
 function clearPanel() {
   document.getElementById('panel-empty').style.display = 'flex';
@@ -358,7 +366,16 @@ function clearSelection({ clearPanelToo = true } = {}) {
   state.selectedFeature = null;
 
   if (clearPanelToo) {
-    clearPanel();
+    document.getElementById('panel-empty').style.display = 'flex';
+    document.getElementById('building-detail').style.display = 'none';
+  }
+
+  // Close mobile sheet
+  if (window.innerWidth <= 700) {
+    mobileBottomSheet.classList.remove('open');
+    setTimeout(() => {
+      mobileBottomSheet.style.display = 'none';
+    }, 300);
   }
 }
 
@@ -552,6 +569,26 @@ async function init() {
       'Error al cargar los datos. Revisa la consola.';
   }
 }
+
+// Close mobile bottom sheet
+closeBottomSheetBtn.addEventListener('click', () => {
+  mobileBottomSheet.classList.remove('open');
+  setTimeout(() => {
+    mobileBottomSheet.style.display = 'none';
+    clearSelection({ clearPanelToo: false }); // keep desktop cleared if needed
+  }, 350);
+});
+
+// Close bottom sheet when clicking map on mobile
+map.on('click', () => {
+  clearHoveredLayer();
+  if (window.innerWidth <= 700) {
+    mobileBottomSheet.classList.remove('open');
+    setTimeout(() => { mobileBottomSheet.style.display = 'none'; }, 350);
+  }
+  clearSelection({ clearPanelToo: true });
+  refreshAllStyles();
+});
 
 
 

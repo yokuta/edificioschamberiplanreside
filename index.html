@@ -36,19 +36,8 @@
 
   <main class="layout">
 
-    <section class="map-shell">
-      <div id="map"></div>
-
-      <div class="map-instructions" id="map-instructions">
-        <div class="map-instructions__title">Interacción</div>
-        <div class="map-instructions__text" id="map-instructions-text">
-          Haz clic en un edificio para ver sus detalles
-        </div>
-      </div>
-    </section>
-
-    <aside id="panel" class="panel">
-
+    <!-- Mobile top compact section -->
+    <div class="mobile-top">
       <section class="kpi-section">
         <div class="kpi-card">
           <div class="kpi-value" id="kpi-total">—</div>
@@ -66,29 +55,39 @@
         </div>
       </section>
 
-      <section class="legend-section">
+      <section class="legend-section" id="mobile-legend">
         <div class="legend-title">Leyenda</div>
-
-        <div class="legend-item" id="legend-residential">
-		  <span class="legend-swatch legend-swatch--residential"></span>
-		  <span>Residencial</span>
-		</div>
-
-		<div class="legend-item" id="legend-other">
-		  <span class="legend-swatch legend-swatch--other"></span>
-		  <span>Otro uso</span>
-		</div>
-
-        <div class="legend-item" id="legend-reside" style="display:none">
-          <span class="legend-swatch legend-swatch--reside"></span>
-          <span>Edificio afectado · Plan Reside</span>
-        </div>
-
-        <div class="legend-item" id="legend-hover">
-          <span class="legend-swatch legend-swatch--hover"></span>
-          <span>Hover</span>
+        <!-- Legend items will be shown/hidden via JS -->
+        <div class="legend-grid">
+          <div class="legend-item" id="legend-residential">
+            <span class="legend-swatch legend-swatch--residential"></span>
+            <span>Residencial</span>
+          </div>
+          <div class="legend-item" id="legend-other">
+            <span class="legend-swatch legend-swatch--other"></span>
+            <span>Otro uso</span>
+          </div>
+          <div class="legend-item" id="legend-reside" style="display:none">
+            <span class="legend-swatch legend-swatch--reside"></span>
+            <span>Afectado · Plan Reside</span>
+          </div>
         </div>
       </section>
+    </div>
+
+    <section class="map-shell">
+      <div id="map"></div>
+
+      <div class="map-instructions" id="map-instructions">
+        <div class="map-instructions__title">Interacción</div>
+        <div class="map-instructions__text" id="map-instructions-text">
+          Haz clic en un edificio para ver sus detalles
+        </div>
+      </div>
+    </section>
+
+    <!-- Desktop side panel -->
+    <aside id="panel" class="panel">
 
       <div class="panel-mode-hint" id="panel-mode-hint" style="display:none">
         <span class="mode-hint-icon">ℹ</span>
@@ -99,19 +98,18 @@
         <div class="empty-icon">⬡</div>
         <p class="empty-title">Selecciona un edificio</p>
         <p class="empty-sub" id="empty-sub">
-          Haz clic sobre cualquier edificio en el mapa para ver su información
+          Haz clic sobre cualquier edificio en el mapa
         </p>
       </div>
 
       <section class="building-detail" id="building-detail" style="display:none">
-
+        <!-- Same content as before -->
         <div class="detail-header">
-		  <div class="detail-header-main">
-			  <div class="detail-ref" id="detail-ref">—</div>
-			  <div class="detail-subtitle" id="detail-subtitle">Ficha del edificio</div>
-			  <div class="detail-meta" id="detail-meta">—</div>
-			</div>
-
+          <div class="detail-header-main">
+            <div class="detail-ref" id="detail-ref">—</div>
+            <div class="detail-subtitle" id="detail-subtitle">Ficha del edificio</div>
+            <div class="detail-meta" id="detail-meta">—</div>
+          </div>
           <a class="detail-link" id="detail-link" href="#" target="_blank" rel="noopener">
             Ver en Catastro ↗
           </a>
@@ -127,37 +125,30 @@
             <span class="prop-key">Uso principal</span>
             <span class="prop-val" id="prop-use">—</span>
           </div>
-
           <div class="prop-row">
             <span class="prop-key">Año construcción</span>
             <span class="prop-val" id="prop-year">—</span>
           </div>
-
           <div class="prop-row">
             <span class="prop-key">Referencia</span>
             <span class="prop-val" id="prop-reference">—</span>
           </div>
-
           <div class="prop-row">
             <span class="prop-key">Unidades catastrales</span>
             <span class="prop-val" id="prop-units">—</span>
           </div>
-
           <div class="prop-row">
             <span class="prop-key">Viviendas</span>
             <span class="prop-val" id="prop-dwellings">—</span>
           </div>
-
           <div class="prop-row">
             <span class="prop-key">Sup. construida</span>
             <span class="prop-val" id="prop-area">—</span>
           </div>
-
           <div class="prop-row">
             <span class="prop-key">Plantas s/rasante</span>
             <span class="prop-val" id="prop-floors">—</span>
           </div>
-
           <div class="prop-row">
             <span class="prop-key">Estado</span>
             <span class="prop-val" id="prop-condition">—</span>
@@ -168,9 +159,18 @@
           <span class="reside-badge-dot"></span>
           Afectado por Plan Reside
         </div>
-
       </section>
     </aside>
+
+    <!-- Mobile Bottom Sheet -->
+    <div id="mobile-bottom-sheet" class="mobile-bottom-sheet">
+      <div class="bottom-sheet-handle"></div>
+      <button id="close-bottom-sheet" class="close-sheet-btn" aria-label="Cerrar">✕</button>
+      
+      <div class="mobile-detail-content" id="mobile-detail-content">
+        <!-- Content is cloned from desktop panel via JS -->
+      </div>
+    </div>
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
