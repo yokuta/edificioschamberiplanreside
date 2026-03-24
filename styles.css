@@ -837,14 +837,15 @@ body.plan-reside-active .leaflet-interactive {
   padding: 0 16px 20px;
 }
 
-/* DESKTOP OVERRIDE */
 @media (min-width: 701px) {
   .layout { flex-direction: row; }
   .mobile-top { display: none; }
   .panel { display: flex; flex-direction: column; }
   .mobile-bottom-sheet { display: none !important; }
   .map-shell { flex: 1; }
+  .kpi-value { font-size: 24px; }
 }
+
 
 /* ===================== MOBILE HEADER SIMPLIFICATION ===================== */
 @media (max-width: 700px) {
