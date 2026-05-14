@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Edificios Chamberí — Plan Reside</title>
+  <title>Edificios Chamberí</title>
   <link rel="icon" href="data:,">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -15,176 +15,232 @@
 
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
 
-  <header class="topbar">
-    <div class="topbar-brand">
-      <span class="topbar-district">CHAMBERÍ</span>
-      <span class="topbar-title">Edificios · Plan Reside</span>
+<header class="topbar">
+  <div class="topbar-brand">
+    <span class="topbar-district">CHAMBERÍ</span>
+  </div>
+
+  <div class="topbar-controls">
+    <button id="btn-plan-reside" class="btn-toggle" aria-pressed="false" type="button">
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      <span class="toggle-label">Plan Reside</span>
+    </button>
+
+    <button id="btn-afectados" class="btn-toggle btn-toggle--accent" aria-pressed="false" type="button">
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      <span class="toggle-label">Edificios afectados</span>
+    </button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <div class="mobile-top">
+    <section class="kpi-section mobile-kpis">
+	  <div class="kpi-card">
+		<div class="kpi-value" id="kpi-total-mobile">—</div>
+		<div class="kpi-label">Edificios totales</div>
+	  </div>
+
+	  <a class="platform-card platform-card--mobile" href="https://x.com/vivchamberi" target="_blank" rel="noopener">
+		<img src="PLATAFORMA_VIVIENDA_CHAMBERÍ_vectorized.png" alt="Plataforma Vivienda Chamberí">
+	  </a>
+
+	  <div class="kpi-card kpi-card--accent">
+		<div class="kpi-value" id="kpi-affected-mobile">—</div>
+		<div class="kpi-label" id="kpi-affected-label-mobile">Edificios afectados</div>
+	  </div>
+	</section>
+
+    <section class="legend-section legend-section--mobile" id="mobile-legend">
+      <div id="mobile-default-legend" class="legend-grid">
+        <div class="legend-item">
+          <span class="legend-swatch legend-swatch--residential"></span>
+          <span>Residencial</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch legend-swatch--other"></span>
+          <span>Otro uso</span>
+        </div>
+      </div>
+
+      <div id="mobile-affected-legend" class="legend-affected-compact" style="display:none">
+        <div class="legend-item"><span class="legend-swatch" style="background:#F6E58D"></span><span>Dudoso</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#FFBE76"></span><span>Indicios</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#F0932B"></span><span>Presión</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#EB4D4B"></span><span>Obras</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#B71540"></span><span>Vaciado</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#1E272E"></span><span>Transformado</span></div>
+      </div>
+	  <div id="mobile-plan-reside-legend" class="legend-grid" style="display:none">
+		  <div class="legend-item">
+			<span class="legend-swatch legend-swatch--reside"></span>
+			<span>Afectados Plan Reside</span>
+		  </div>
+		</div>
+    </section>
+  </div>
+
+  <section class="map-shell">
+    <div id="map"></div>
+
+    <div class="map-instructions" id="map-instructions">
+      <div class="map-instructions__title">Interacción</div>
+      <div class="map-instructions__text" id="map-instructions-text">
+        Haz clic en un edificio para ver sus detalles
+      </div>
     </div>
+  </section>
 
-    <div class="topbar-controls">
-      <button id="btn-plan-reside" class="btn-toggle" aria-pressed="false" type="button" aria-label="Activar o desactivar Plan Reside">
-        <span class="toggle-track" aria-hidden="true">
-          <span class="toggle-thumb"></span>
-        </span>
-        <span class="toggle-label">Plan Reside</span>
-      </button>
-      <div class="topbar-source">Fuente: Catastro · Madrid</div>
-    </div>
-  </header>
+  <aside id="panel" class="panel">
 
-  <main class="layout">
+    <section class="kpi-section">
+	  <div class="kpi-card">
+		<div class="kpi-value" id="kpi-total">—</div>
+		<div class="kpi-label">Edificios totales</div>
+	  </div>
 
-    <!-- MOBILE COMPACT HEADER -->
-    <div class="mobile-top">
-      <section class="kpi-section mobile-kpis">
-        <div class="kpi-card">
-          <div class="kpi-value" id="kpi-total-mobile">—</div>
-          <div class="kpi-label">Edificios totales</div>
+	  <a class="platform-card" href="https://x.com/vivchamberi" target="_blank" rel="noopener">
+		<img src="PLATAFORMA_VIVIENDA_CHAMBERÍ_vectorized.png" alt="Plataforma Vivienda Chamberí">
+	  </a>
+
+	  <div class="kpi-card kpi-card--accent">
+		<div class="kpi-value" id="kpi-affected">—</div>
+		<div class="kpi-label" id="kpi-affected-label">Edificios afectados</div>
+	  </div>
+	</section>
+
+    <section class="legend-section">
+      <div class="legend-title">Leyenda</div>
+
+      <div id="legend-default">
+        <div class="legend-item">
+          <span class="legend-swatch legend-swatch--residential"></span>
+          <span>Residencial</span>
         </div>
-        <div class="kpi-card kpi-card--accent" id="kpi-card-affected">
-          <div class="kpi-value" id="kpi-affected-mobile">—</div>
-          <div class="kpi-label">Afectados Plan Reside</div>
+        <div class="legend-item">
+          <span class="legend-swatch legend-swatch--other"></span>
+          <span>Otro uso</span>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-value" id="kpi-pct-mobile">—</div>
-          <div class="kpi-label">% afectados</div>
+      </div>
+
+      <div id="legend-plan-reside" style="display:none">
+		  <div class="legend-item">
+			<span class="legend-swatch legend-swatch--reside"></span>
+			<span>Afectados Plan Reside</span>
+		  </div>
+		</div>
+		
+		
+      <div id="legend-afectados" style="display:none">
+        <div class="legend-subtitle">Estado de transformación</div>
+
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:#EFEFEF;border:1px solid #D0D0D0"></span>
+          <span>0 · Sin caso detectado</span>
         </div>
-      </section>
 
-      <section class="legend-section" id="mobile-legend">
-        <div class="legend-grid">
-          <div class="legend-item" id="legend-residential-mobile">
-            <span class="legend-swatch legend-swatch--residential"></span>
-            <span>Residencial</span>
-          </div>
-          <div class="legend-item" id="legend-other-mobile">
-            <span class="legend-swatch legend-swatch--other"></span>
-            <span>Otro uso</span>
-          </div>
-          <div class="legend-item" id="legend-reside-mobile" style="display:none">
-            <span class="legend-swatch legend-swatch--reside"></span>
-            <span>Afectado · Plan Reside</span>
-          </div>
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:#F6E58D"></span>
+          <span>1 · En listado pero sin confirmar</span>
         </div>
-      </section>
-    </div>
 
-    <section class="map-shell">
-      <div id="map"></div>
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:#FFBE76"></span>
+          <span>2 · Presión inicial / indicios</span>
+        </div>
 
-      <div class="map-instructions" id="map-instructions">
-        <div class="map-instructions__title">Interacción</div>
-        <div class="map-instructions__text" id="map-instructions-text">
-          Haz clic en un edificio para ver sus detalles
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:#F0932B"></span>
+          <span>3 · Conflicto o presión inmobiliaria</span>
+        </div>
+
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:#EB4D4B"></span>
+          <span>4 · Obras / vaciado parcial</span>
+        </div>
+
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:#B71540"></span>
+          <span>5 · Vaciado completo / expulsión avanzada</span>
+        </div>
+
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:#1E272E"></span>
+          <span>6 · Transformado / lujo / turístico</span>
         </div>
       </div>
     </section>
 
-    <!-- DESKTOP SIDE PANEL -->
-    <aside id="panel" class="panel">
+    <div class="panel-mode-hint" id="panel-mode-hint" style="display:none">
+      <span class="mode-hint-icon">ℹ</span>
+      En modo Plan Reside solo puedes seleccionar edificios afectados.
+    </div>
 
-      <section class="kpi-section">
-        <div class="kpi-card">
-          <div class="kpi-value" id="kpi-total">—</div>
-          <div class="kpi-label">Edificios totales</div>
-        </div>
-        <div class="kpi-card kpi-card--accent" id="kpi-card-affected">
-          <div class="kpi-value" id="kpi-affected">—</div>
-          <div class="kpi-label">Afectados Plan Reside</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-value" id="kpi-pct">—</div>
-          <div class="kpi-label">% afectados</div>
-        </div>
-      </section>
+    <div class="panel-empty-state" id="panel-empty">
+      <div class="empty-icon">⬡</div>
+      <p class="empty-title">Selecciona un edificio</p>
+      <p class="empty-sub" id="empty-sub">
+        Haz clic sobre cualquier edificio en el mapa para ver su información
+      </p>
+    </div>
 
-      <section class="legend-section">
-        <div class="legend-title">Leyenda</div>
-        <div class="legend-item" id="legend-residential">
-          <span class="legend-swatch legend-swatch--residential"></span>
-          <span>Residencial</span>
+    <section class="building-detail" id="building-detail" style="display:none">
+      <div class="detail-header">
+        <div class="detail-header-main">
+          <div class="detail-ref" id="detail-ref">—</div>
+          <div class="detail-subtitle" id="detail-subtitle">Ficha del edificio</div>
+          <div class="detail-meta" id="detail-meta">—</div>
         </div>
-        <div class="legend-item" id="legend-other">
-          <span class="legend-swatch legend-swatch--other"></span>
-          <span>Otro uso</span>
-        </div>
-        <div class="legend-item" id="legend-reside" style="display:none">
-          <span class="legend-swatch legend-swatch--reside"></span>
-          <span>Edificio afectado · Plan Reside</span>
-        </div>
-        <div class="legend-item" id="legend-hover">
-          <span class="legend-swatch legend-swatch--hover"></span>
-          <span>Hover</span>
-        </div>
-      </section>
-
-      <div class="panel-mode-hint" id="panel-mode-hint" style="display:none">
-        <span class="mode-hint-icon">ℹ</span>
-        En modo Plan Reside solo puedes seleccionar edificios afectados (en rojo)
+        <a class="detail-link" id="detail-link" href="#" target="_blank" rel="noopener">
+          Ver en Catastro ↗
+        </a>
       </div>
 
-      <div class="panel-empty-state" id="panel-empty">
-        <div class="empty-icon">⬡</div>
-        <p class="empty-title">Selecciona un edificio</p>
-        <p class="empty-sub" id="empty-sub">
-          Haz clic sobre cualquier edificio en el mapa para ver su información
-        </p>
+      <div class="facade-wrapper">
+        <img id="facade-img" class="facade-img" src="" alt="Fachada catastral" loading="lazy" />
+        <div class="facade-placeholder" id="facade-placeholder">Sin imagen de fachada</div>
       </div>
 
-      <section class="building-detail" id="building-detail" style="display:none">
-        <div class="detail-header">
-          <div class="detail-header-main">
-            <div class="detail-ref" id="detail-ref">—</div>
-            <div class="detail-subtitle" id="detail-subtitle">Ficha del edificio</div>
-            <div class="detail-meta" id="detail-meta">—</div>
-          </div>
-          <a class="detail-link" id="detail-link" href="#" target="_blank" rel="noopener">
-            Ver en Catastro ↗
-          </a>
-        </div>
+      <div class="reside-badge" id="reside-badge" style="display:none">
+        <span class="reside-badge-dot"></span>
+        Afectado
+      </div>
 
-        <div class="facade-wrapper">
-          <img id="facade-img" class="facade-img" src="" alt="Fachada catastral" loading="lazy" />
-          <div class="facade-placeholder" id="facade-placeholder">Sin imagen de fachada</div>
-        </div>
+      <div class="props-grid">
+        <div class="prop-row"><span class="prop-key">Dirección</span><span class="prop-val" id="prop-address">—</span></div>
+        <div class="prop-row"><span class="prop-key">Uso principal</span><span class="prop-val" id="prop-use">—</span></div>
+        <div class="prop-row"><span class="prop-key">Año construcción</span><span class="prop-val" id="prop-year">—</span></div>
+        <div class="prop-row"><span class="prop-key">Referencia</span><span class="prop-val" id="prop-reference">—</span></div>
+        <div class="prop-row"><span class="prop-key">Viviendas</span><span class="prop-val" id="prop-dwellings">—</span></div>
+        <div class="prop-row"><span class="prop-key">Sup. construida</span><span class="prop-val" id="prop-area">—</span></div>
+        <div class="prop-row"><span class="prop-key">Estado proceso</span><span class="prop-val" id="prop-process">—</span></div>
+        <div class="prop-row"><span class="prop-key">Tipo transformación</span><span class="prop-val" id="prop-transformation">—</span></div>
+        <div class="prop-row prop-row--notes"><span class="prop-key">Notas</span><span class="prop-val" id="prop-notes">—</span></div>
+        <div class="prop-row prop-row--notes"><span class="prop-key">Propietarios</span><span class="prop-val" id="prop-owners">—</span></div>
+      </div>
+    </section>
+  </aside>
 
-        <div class="props-grid">
-          <div class="prop-row"><span class="prop-key">Uso principal</span><span class="prop-val" id="prop-use">—</span></div>
-          <div class="prop-row"><span class="prop-key">Año construcción</span><span class="prop-val" id="prop-year">—</span></div>
-          <div class="prop-row"><span class="prop-key">Referencia</span><span class="prop-val" id="prop-reference">—</span></div>
-          <div class="prop-row"><span class="prop-key">Unidades catastrales</span><span class="prop-val" id="prop-units">—</span></div>
-          <div class="prop-row"><span class="prop-key">Viviendas</span><span class="prop-val" id="prop-dwellings">—</span></div>
-          <div class="prop-row"><span class="prop-key">Sup. construida</span><span class="prop-val" id="prop-area">—</span></div>
-          <div class="prop-row"><span class="prop-key">Plantas s/rasante</span><span class="prop-val" id="prop-floors">—</span></div>
-          <div class="prop-row"><span class="prop-key">Estado</span><span class="prop-val" id="prop-condition">—</span></div>
-        </div>
-
-        <div class="reside-badge" id="reside-badge" style="display:none">
-          <span class="reside-badge-dot"></span>
-          Afectado por Plan Reside
-        </div>
-      </section>
-    </aside>
-
-    <!-- MOBILE BOTTOM SHEET -->
-    <div id="mobile-bottom-sheet" class="mobile-bottom-sheet">
-      <div class="bottom-sheet-handle"></div>
-      <button id="close-bottom-sheet" class="close-sheet-btn" aria-label="Cerrar">✕</button>
-      <div class="mobile-detail-content" id="mobile-detail-content"></div>
-    </div>
-  </main>
-
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-  <div id="loading-overlay" class="loading-overlay">
-    <div class="loading-inner">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Cargando edificios…</div>
-    </div>
+  <div id="mobile-bottom-sheet" class="mobile-bottom-sheet">
+    <div class="bottom-sheet-handle"></div>
+    <button id="close-bottom-sheet" class="close-sheet-btn" aria-label="Cerrar">✕</button>
+    <div class="mobile-detail-content" id="mobile-detail-content"></div>
   </div>
+</main>
 
-  <script src="script.js"></script>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-inner">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Cargando edificios…</div>
+  </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
